@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/slyngdk/nebula-provisioner/protocol";
+
+package protocol;
+
+service ServerCommand {
+    rpc IsInit (google.protobuf.Empty) returns (IsInitResponse) {
+    }
+    rpc Init (google.protobuf.Empty) returns (InitResponse) {
+    }
+}
+
+message InitResponse {
+    string message = 1;
+}
+
+message IsInitResponse {
+    bool isInitialized = 1;
+}
