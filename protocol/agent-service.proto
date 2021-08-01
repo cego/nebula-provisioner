@@ -4,16 +4,15 @@ option go_package = "github.com/slyngdk/nebula-provisioner/protocol";
 
 package protocol;
 
-service NebulaProvisioner {
-    rpc SayHello (HelloRequest) returns (HelloReply) {}
+service AgentService {
+    rpc Enroll (EnrollRequest) returns (EnrollResponse) {}
 }
 
 // The request message containing the user's name.
-message HelloRequest {
-    string name = 1;
+message EnrollRequest {
+    string token = 1;
 }
 
 // The response message containing the greetings
-message HelloReply {
-    string message = 1;
+message EnrollResponse {
 }

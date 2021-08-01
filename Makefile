@@ -19,11 +19,12 @@ endif
 bin: protocol
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/server${CMD_SUFFIX} ${CMD_PATH}/server
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/server-client${CMD_SUFFIX} ${CMD_PATH}/server-client
+	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/agent${CMD_SUFFIX} ${CMD_PATH}/agent
 
-protocol: protocol/nebula-provisioner.pb.go protocol/server-command.pb.go
+protocol: protocol/agent-service.pb.go protocol/server-command.pb.go
 
-protocol/nebula-provisioner.pb.go: protocol/nebula-provisioner.proto
-	$(MAKE) -C protocol nebula-provisioner.pb.go
+protocol/agent-service.pb.go: protocol/agent-service.proto
+	$(MAKE) -C protocol agent-service.pb.go
 
 protocol/server-command.pb.go: protocol/server-command.proto
 	$(MAKE) -C protocol server-command.pb.go

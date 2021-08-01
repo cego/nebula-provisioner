@@ -54,7 +54,8 @@ func main() {
 		l.WithError(err).Error("Failed to start")
 		os.Exit(1)
 	}
+	defer c.Stop()
 
-	c.Start()
+	go c.Start()
 	c.ShutdownBlock()
 }

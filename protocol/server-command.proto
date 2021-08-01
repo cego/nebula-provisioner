@@ -9,14 +9,27 @@ package protocol;
 service ServerCommand {
     rpc IsInit (google.protobuf.Empty) returns (IsInitResponse) {
     }
-    rpc Init (google.protobuf.Empty) returns (InitResponse) {
+    rpc Init (InitRequest) returns (InitResponse) {
+    }
+    rpc Unseal (UnsealRequest) returns (UnsealResponse) {
     }
 }
 
+message InitRequest {
+    uint32 keyParts = 1;
+    uint32 keyThreshold = 2;
+}
 message InitResponse {
-    string message = 1;
+    repeated string keyParts = 1;
 }
 
 message IsInitResponse {
     bool isInitialized = 1;
+}
+
+message UnsealRequest {
+    string keyPart = 1;
+    bool removeExistingParts = 2;
+}
+message UnsealResponse {
 }

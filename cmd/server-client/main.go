@@ -17,9 +17,6 @@ func (he *helpError) Error() string {
 	return he.s
 }
 
-func newHelpErrorf(s string, v ...interface{}) error {
-	return &helpError{s: fmt.Sprintf(s, v...)}
-}
 func main() {
 	flag.Usage = func() {
 		help("", os.Stderr)
@@ -61,6 +58,8 @@ func main() {
 	switch args[0] {
 	case "init":
 		err = runInit(args[1:], os.Stdout, os.Stderr)
+	case "unseal":
+		err = runUnseal(args[1:], os.Stdout, os.Stderr)
 	default:
 		err = fmt.Errorf("unknown mode: %s", args[0])
 	}
@@ -84,6 +83,7 @@ func help(err string, out io.Writer) {
 	fmt.Fprintln(out, "")
 	fmt.Fprintln(out, "  Modes:")
 	fmt.Fprintln(out, "    "+initSummary())
+	fmt.Fprintln(out, "    "+unsealSummary())
 }
 
 func handleError(mode string, e error, out io.Writer) int {
@@ -102,6 +102,8 @@ func handleError(mode string, e error, out io.Writer) int {
 		switch mode {
 		case "init":
 			initHelp(out)
+		case "unseal":
+			unsealHelp(out)
 		}
 	}
 

@@ -3,3 +3,5 @@
 
 /bin/
 /protocol/*.pb.go
+*.pem
+*.key

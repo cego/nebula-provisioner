@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/slyngdk/nebula-provisioner/protocol"
-	"google.golang.org/grpc"
 	"io"
 	"os"
 	"time"
@@ -31,11 +30,17 @@ func runInit(args []string, out io.Writer, errOut io.Writer) error {
 		return err
 	}
 
+	sc, err := NewClient()
+	if err != nil {
+		return err
+	}
+	defer sc.Close()
+
 	if *flags.check {
-		return isInit(out)
+		return sc.isInit(out)
 	}
 
-	return fmt.Errorf("NotImplemented")
+	return sc.init(out)
 }
 
 func initSummary() string {
@@ -49,24 +54,12 @@ func initHelp(out io.Writer) {
 	cf.set.PrintDefaults()
 }
 
-func isInit(out io.Writer) error {
-
-	var opts []grpc.DialOption
-
-	opts = append(opts, grpc.WithInsecure())
-
-	conn, err := grpc.Dial("unix:///tmp/nebula-provisioner.socket", opts...) // TODO change socket path
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-
-	client := protocol.NewServerCommandClient(conn)
+func (c serverClient) isInit(out io.Writer) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	response, err := client.IsInit(ctx, &empty.Empty{})
+	response, err := c.client.IsInit(ctx, &empty.Empty{})
 	if err != nil {
 		return err
 	}
@@ -76,5 +69,49 @@ func isInit(out io.Writer) error {
 	} else {
 		fmt.Fprintln(out, "Server is not yet initialized")
 	}
+	return nil
+}
+
+func (c serverClient) init(out io.Writer) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	isInitRes, err := c.client.IsInit(ctx, &empty.Empty{})
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprint(out,"How many parts do you want to split the key in? ")
+	var nParts uint32
+	_, err = fmt.Scanf("%d", &nParts)
+	if err != nil {
+		return err
+	}
+	fmt.Fprint(out,"How many parts will you require to unseal the server? ")
+	var threshold uint32
+	_, err = fmt.Scanf("%d", &threshold)
+	if err != nil {
+		return err
+	}
+
+	if isInitRes.IsInitialized {
+		fmt.Fprintln(out, "Server is already initialized")
+		return nil
+	}
+
+	response, err := c.client.Init(ctx, &protocol.InitRequest{
+		KeyParts:     nParts,
+		KeyThreshold: threshold,
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintln(out, "Keep these parts stored secure and seperated!!!")
+	fmt.Fprintf(out, "You require %d parts to unseal the server.\n", threshold)
+	for _, keyPart := range response.KeyParts {
+		fmt.Fprintln(out, keyPart)
+	}
+
 	return nil
 }

@@ -1,21 +1,19 @@
 package server
 
 import (
-	context "context"
 	"github.com/sirupsen/logrus"
 	"github.com/slackhq/nebula"
-	"github.com/slyngdk/nebula-provisioner/protocol"
+	"github.com/slyngdk/nebula-provisioner/server/store"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/emptypb"
-	"net"
 )
 
 type server struct {
-	l        *logrus.Logger
-	config   *nebula.Config
-	unixGrpc *grpc.Server
-	initialized bool
-	store *store
+	l               *logrus.Logger
+	config          *nebula.Config
+	initialized     bool
+	store           *store.Store
+	unixGrpc        *grpc.Server
+	provisionerGrpc *grpc.Server
 }
 
 func Main(config *nebula.Config, buildVersion string, logger *logrus.Logger) (*Control, error) {
@@ -24,27 +22,50 @@ func Main(config *nebula.Config, buildVersion string, logger *logrus.Logger) (*C
 		FullTimestamp: true,
 	}
 
-	server := server{l, config, nil, false, nil}
+	server := server{l, config, false, nil, nil, nil}
 
 	return &Control{l, server.start, server.stop, make(chan interface{})}, nil
 }
 
 func (s *server) start() error {
+	unsealed := make(chan interface{})
 
-	store, err := NewStore(s.config)
+	store, err := store.NewStore(s.l, s.config, unsealed)
 	if err != nil {
 		return err
 	}
 	s.store = store
 
-	if err := s.startUnixSocket(); err != nil {
+	err = s.startUnixSocket(store)
+	if err != nil {
 		return err
+	}
+
+	s.l.Println("Use server-client to continue startup.")
+
+	if s.store.IsInitialized() {
+		s.l.Println("Waiting on unsealing...")
+	} else {
+		s.l.Println("Waiting on initializing...")
+	}
+
+	select {
+	case _ = <-unsealed:
+		// continue startup when unsealed
+		err = s.startProvisioner(store)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
 func (s *server) stop() {
+	if err := s.stopProvisioner(); err != nil {
+		s.l.WithError(err).Error("Failed to stop agentService server")
+	}
+
 	if err := s.stopUnixSocket(); err != nil {
 		s.l.WithError(err).Error("Failed to stop unix socket server")
 	}
@@ -54,43 +75,4 @@ func (s *server) stop() {
 			s.l.WithError(err).Error("Failed to stop store")
 		}
 	}
-}
-
-func (s *server) startUnixSocket() error {
-	s.l.Println("Starting http unix socket")
-	lis, err := net.Listen("unix", "/tmp/nebula-provisioner.socket") // TODO add address to config
-	if err != nil {
-		return err
-	}
-
-	var opts []grpc.ServerOption
-	s.unixGrpc = grpc.NewServer(opts...)
-	protocol.RegisterServerCommandServer(s.unixGrpc, &commandServer{})
-	go func() {
-		err := s.unixGrpc.Serve(lis)
-		if err != nil {
-			s.l.WithError(err).Error("Failed to start http unix socket")
-		}
-	}()
-	return nil
-}
-
-func (s *server) stopUnixSocket() error {
-	s.l.Println("Stopping http unix socket")
-	if s.unixGrpc != nil {
-		s.unixGrpc.GracefulStop()
-	}
-	return nil
-}
-
-type commandServer struct {
-	protocol.UnimplementedServerCommandServer
-}
-
-func (_ commandServer) Init(ctx context.Context, in *emptypb.Empty) (*protocol.InitResponse, error) {
-	return &protocol.InitResponse{Message: "Hi from server"}, nil
-}
-
-func (_ commandServer) IsInit(context.Context, *emptypb.Empty) (*protocol.IsInitResponse, error){
-	return &protocol.IsInitResponse{IsInitialized: false}, nil
 }
