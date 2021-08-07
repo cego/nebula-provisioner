@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"github.com/slackhq/nebula"
 	"github.com/slyngdk/nebula-provisioner/protocol"
 	"google.golang.org/grpc"
 )
@@ -10,13 +12,14 @@ type serverClient struct {
 	client protocol.ServerCommandClient
 }
 
-func NewClient() (*serverClient, error) {
+func NewClient(config *nebula.Config) (*serverClient, error) {
 
 	var opts []grpc.DialOption
 
 	opts = append(opts, grpc.WithInsecure())
 
-	conn, err := grpc.Dial("unix:///tmp/nebula-provisioner.socket", opts...) // TODO change socket path
+	socketPath := config.GetString("command.socket", "/tmp/nebula-provisioner.socket") // TODO Change default path
+	conn, err := grpc.Dial(fmt.Sprintf("unix://%s", socketPath), opts...)
 	if err != nil {
 		return nil, err
 	}

@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/slyngdk/nebula-provisioner/server/store";
+
+package store;
+
+message CA {
+  string networkName = 1;
+
+  bytes publicKey = 10;
+  bytes privateKey = 11;
+  string sha256sum = 12;
+}
+
+message EnrollmentToken {
+  string token = 1;
+  string networkName = 2;
+}
+
+message EnrollmentRequest {
+  bytes clientFingerprint = 1;
+  google.protobuf.Timestamp created = 2;
+  string token = 3;
+  string networkName = 4;
+  string csrPEM = 5;
+  string clientIP = 6;
+}
+
+message Agent {
+  bytes clientFingerprint = 1;
+  google.protobuf.Timestamp created = 2;
+  string networkName = 3;
+  repeated string groups = 4;
+  string csrPEM = 5;
+
+  string signedPEM = 10;
+  google.protobuf.Timestamp issuedAt = 11;
+  google.protobuf.Timestamp expiresAt = 12;
+}
+
+message IPRange {
+  bytes network = 1;
+  bytes netmask = 2;
+}

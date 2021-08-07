@@ -16,18 +16,26 @@ else
 	NULL_FILE = /dev/null
 endif
 
-bin: protocol
+bin: protocol server/store/store.pb.go
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/server${CMD_SUFFIX} ${CMD_PATH}/server
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/server-client${CMD_SUFFIX} ${CMD_PATH}/server-client
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/agent${CMD_SUFFIX} ${CMD_PATH}/agent
 
-protocol: protocol/agent-service.pb.go protocol/server-command.pb.go
+protocol: protocol/models.pb.go protocol/agent-service.pb.go protocol/server-command.pb.go
+
+protocol/models.pb.go: protocol/models.proto
+	$(MAKE) -C protocol models.pb.go
 
 protocol/agent-service.pb.go: protocol/agent-service.proto
 	$(MAKE) -C protocol agent-service.pb.go
 
 protocol/server-command.pb.go: protocol/server-command.proto
 	$(MAKE) -C protocol server-command.pb.go
+
+server/store/store.pb.go: server/store/store.proto
+	go build google.golang.org/protobuf/cmd/protoc-gen-go
+	PATH="$(CURDIR):$(PATH)" protoc --go_out=. --go_opt=paths=source_relative $<
+	rm protoc-gen-go
 
 vet:
 	go vet -v ./...

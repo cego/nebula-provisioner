@@ -1,35 +1,100 @@
 syntax = "proto3";
 
+import "models.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/slyngdk/nebula-provisioner/protocol";
 
 package protocol;
 
 service ServerCommand {
-    rpc IsInit (google.protobuf.Empty) returns (IsInitResponse) {
-    }
-    rpc Init (InitRequest) returns (InitResponse) {
-    }
-    rpc Unseal (UnsealRequest) returns (UnsealResponse) {
-    }
+  rpc IsInit (google.protobuf.Empty) returns (IsInitResponse) {}
+  rpc Init (InitRequest) returns (InitResponse) {}
+  rpc Unseal (UnsealRequest) returns (UnsealResponse) {}
+  rpc CreateNetwork (CreateNetworkRequest) returns (CreateNetworkResponse) {}
+  rpc ListNetwork (ListNetworkRequest) returns (ListNetworkResponse) {}
+  rpc ListCertificateAuthorityByNetwork (ListCertificateAuthorityByNetworkRequest) returns (ListCertificateAuthorityByNetworkResponse) {}
+  rpc GetEnrollmentTokenForNetwork (GetEnrollmentTokenForNetworkRequest) returns (GetEnrollmentTokenForNetworkResponse){}
+  rpc ListEnrollmentRequests (google.protobuf.Empty) returns (ListEnrollmentRequestsResponse) {}
+  rpc ApproveEnrollmentRequest (ApproveEnrollmentRequestRequest) returns (google.protobuf.Empty) {}
 }
 
 message InitRequest {
-    uint32 keyParts = 1;
-    uint32 keyThreshold = 2;
+  uint32 keyParts = 1;
+  uint32 keyThreshold = 2;
 }
 message InitResponse {
-    repeated string keyParts = 1;
+  repeated string keyParts = 1;
 }
 
 message IsInitResponse {
-    bool isInitialized = 1;
+  bool isInitialized = 1;
 }
 
 message UnsealRequest {
-    string keyPart = 1;
-    bool removeExistingParts = 2;
+  string keyPart = 1;
+  bool removeExistingParts = 2;
 }
 message UnsealResponse {
+}
+
+message CreateNetworkRequest {
+  string name = 1;
+  google.protobuf.Duration duration = 2;
+  repeated string groups = 3;
+  repeated string ips = 4;
+  repeated string subnets = 5;
+  repeated string ipPools = 6;
+}
+message CreateNetworkResponse {
+  Network network = 1;
+}
+
+message ListNetworkRequest {
+
+}
+message ListNetworkResponse {
+  repeated Network networks = 1;
+}
+
+message Network {
+  string name = 1;
+  google.protobuf.Duration duration = 2;
+  repeated string groups = 3;
+  repeated string ips = 4;
+  repeated string subnets = 5;
+  repeated string ipPools = 6;
+}
+
+message ListCertificateAuthorityByNetworkRequest {
+  repeated string networkNames = 1;
+}
+
+message ListCertificateAuthorityByNetworkResponse {
+  repeated CertificateAuthority  certificateAuthorities = 1;
+}
+
+message GetEnrollmentTokenForNetworkRequest {
+  string network = 1;
+}
+
+message GetEnrollmentTokenForNetworkResponse {
+  string enrollmentToken = 1;
+}
+
+message ListEnrollmentRequestsResponse {
+  repeated EnrollmentRequest enrollmentRequests = 1;
+}
+
+message EnrollmentRequest {
+  string clientFingerprint = 1;
+  google.protobuf.Timestamp created = 2;
+  string networkName = 3;
+  string clientIP = 4;
+}
+
+message ApproveEnrollmentRequestRequest {
+  string clientFingerprint = 1;
 }

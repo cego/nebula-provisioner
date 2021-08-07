@@ -3,5 +3,10 @@
 
 /bin/
 /protocol/*.pb.go
+/protocol/protoc-gen-go
+/protocol/protoc-gen-go-grpc
 *.pem
+*.crt
+*.csr
 *.key
+server/store/*.pb.go

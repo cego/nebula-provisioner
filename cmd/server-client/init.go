@@ -2,59 +2,50 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/slyngdk/nebula-provisioner/protocol"
-	"io"
+	"github.com/spf13/cobra"
 	"os"
 	"time"
 )
 
-type initFlags struct {
-	set   *flag.FlagSet
-	check *bool
+var initCmd = &cobra.Command{
+	Use:   "init",
+	Short: "Initialize server with new shared secret",
+	Run: func(cmd *cobra.Command, args []string) {
+		sc, err := NewClient(config)
+		if err != nil {
+			fmt.Printf("failed to create client: %s", err)
+			os.Exit(1)
+		}
+		defer sc.Close()
+
+		check, err := cmd.Flags().GetBool("check")
+		if err != nil {
+			fmt.Printf("failed to get check flag: %s\n", err)
+			return
+		}
+
+		if check {
+			if err = isInit(sc); err != nil {
+				fmt.Printf("failed to check is server is initialized: %s\n", err)
+				return
+			}
+		}
+
+		if err = initServer(sc); err != nil {
+			fmt.Printf("failed to initialize server: %s\n", err)
+			return
+		}
+	},
 }
 
-func newInitFlags() *initFlags {
-	flags := initFlags{set: flag.NewFlagSet("init", flag.ContinueOnError)}
-	flags.set.Usage = func() {}
-	flags.check = flags.set.Bool("check", false, "Check if server is initialized")
-	return &flags
+func init() {
+	initCmd.Flags().Bool("check", false, "Check if server is initialized")
 }
 
-func runInit(args []string, out io.Writer, errOut io.Writer) error {
-	flags := newInitFlags()
-	err := flags.set.Parse(args)
-	if err != nil {
-		return err
-	}
-
-	sc, err := NewClient()
-	if err != nil {
-		return err
-	}
-	defer sc.Close()
-
-	if *flags.check {
-		return sc.isInit(out)
-	}
-
-	return sc.init(out)
-}
-
-func initSummary() string {
-	return "init <flags>: init provision server with new shared secret"
-}
-
-func initHelp(out io.Writer) {
-	cf := newInitFlags()
-	out.Write([]byte("Usage of " + os.Args[0] + " " + initSummary() + "\n"))
-	cf.set.SetOutput(out)
-	cf.set.PrintDefaults()
-}
-
-func (c serverClient) isInit(out io.Writer) error {
+func isInit(c *serverClient) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -65,14 +56,14 @@ func (c serverClient) isInit(out io.Writer) error {
 	}
 
 	if response.IsInitialized {
-		fmt.Fprintln(out, "Server is initialized")
+		fmt.Println("Server is initialized")
 	} else {
-		fmt.Fprintln(out, "Server is not yet initialized")
+		fmt.Println("Server is not yet initialized")
 	}
 	return nil
 }
 
-func (c serverClient) init(out io.Writer) error {
+func initServer(c *serverClient) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -81,13 +72,13 @@ func (c serverClient) init(out io.Writer) error {
 		return err
 	}
 
-	fmt.Fprint(out,"How many parts do you want to split the key in? ")
+	fmt.Print("How many parts do you want to split the key in? ")
 	var nParts uint32
 	_, err = fmt.Scanf("%d", &nParts)
 	if err != nil {
 		return err
 	}
-	fmt.Fprint(out,"How many parts will you require to unseal the server? ")
+	fmt.Print("How many parts will you require to unseal the server? ")
 	var threshold uint32
 	_, err = fmt.Scanf("%d", &threshold)
 	if err != nil {
@@ -95,7 +86,7 @@ func (c serverClient) init(out io.Writer) error {
 	}
 
 	if isInitRes.IsInitialized {
-		fmt.Fprintln(out, "Server is already initialized")
+		fmt.Println("Server is already initialized")
 		return nil
 	}
 
@@ -107,11 +98,14 @@ func (c serverClient) init(out io.Writer) error {
 		return err
 	}
 
-	fmt.Fprintln(out, "Keep these parts stored secure and seperated!!!")
-	fmt.Fprintf(out, "You require %d parts to unseal the server.\n", threshold)
+	fmt.Println("Keep these parts stored secure and seperated!!!")
+	fmt.Printf("You require %d parts to unseal the server.\n", threshold)
 	for _, keyPart := range response.KeyParts {
-		fmt.Fprintln(out, keyPart)
+		fmt.Println(keyPart)
 	}
+
+	fmt.Println()
+	fmt.Println("Server is now initialized and ready to be unseal")
 
 	return nil
 }

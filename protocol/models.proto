@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option go_package = "github.com/slyngdk/nebula-provisioner/protocol";
+
+package protocol;
+
+message CertificateAuthority {
+  string networkName = 1;
+  string publicKeyPEM = 10;
+  string sha256sum = 11;
+}

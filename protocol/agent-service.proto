@@ -1,18 +1,46 @@
 syntax = "proto3";
 
+import "models.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/slyngdk/nebula-provisioner/protocol";
 
 package protocol;
 
 service AgentService {
-    rpc Enroll (EnrollRequest) returns (EnrollResponse) {}
+  rpc Enroll (EnrollRequest) returns (EnrollResponse) {}
+  rpc GetEnrollStatus (google.protobuf.Empty) returns (GetEnrollStatusResponse){}
+  rpc GetCertificateAuthorityByNetwork (GetCertificateAuthorityByNetworkRequest) returns (GetCertificateAuthorityByNetworkResponse) {
+  }
 }
 
-// The request message containing the user's name.
 message EnrollRequest {
-    string token = 1;
+  string token = 1;
+  string csrPEM = 2;
+  repeated string groups = 3;
+
+  // TODO friendly name
 }
 
-// The response message containing the greetings
 message EnrollResponse {
+}
+
+message GetEnrollStatusResponse {
+  bool isEnrolled = 1;
+  bool isEnrollmentRequested = 2;
+
+  string signedPEM = 10;
+  google.protobuf.Timestamp issuedAt = 11;
+  google.protobuf.Timestamp expiresAt = 12;
+
+  repeated CertificateAuthority certificateAuthorities = 20;
+}
+
+message GetCertificateAuthorityByNetworkRequest {
+  repeated string networkNames = 1;
+}
+
+message GetCertificateAuthorityByNetworkResponse {
+  repeated CertificateAuthority  certificateAuthorities = 1;
 }

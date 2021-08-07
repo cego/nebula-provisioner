@@ -71,8 +71,12 @@ func (s *Store) open(encryptionKey []byte) error {
 			return fmt.Errorf("Failed to create file %s with error: %s\n", path.Join(s.path, initFileName), err)
 		}
 	}
+	opts := badger.DefaultOptions(s.path)
+	opts.EncryptionKey = encryptionKey
+	opts.IndexCacheSize = 10 << 20 // 10MB
+	opts.Logger = s.l
 
-	db, err := badger.Open(badger.DefaultOptions(s.path).WithEncryptionKey(encryptionKey))
+	db, err := badger.Open(opts)
 	if err != nil {
 		return err
 	}
@@ -151,4 +155,16 @@ func appendIfMissing(slice [][]byte, b []byte) [][]byte {
 		}
 	}
 	return append(slice, b)
+}
+
+func exists(txn *badger.Txn, prefix, key []byte) bool {
+	opt := badger.DefaultIteratorOptions
+	opt.PrefetchValues = false
+	it := txn.NewKeyIterator(append(prefix, key...), opt)
+	defer it.Close()
+
+	for it.Rewind(); it.Valid(); it.Next() {
+		return true
+	}
+	return false
 }
