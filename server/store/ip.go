@@ -25,7 +25,7 @@ func init() {
 	}
 }
 
-type IPAllocatorRange struct {
+type IPPool struct {
 	l *logrus.Logger
 
 	cidr        *net.IPNet
@@ -37,7 +37,7 @@ type IPAllocatorRange struct {
 	key  []byte
 }
 
-func (r *IPAllocatorRange) next() {
+func (r *IPPool) next() {
 
 }
 
@@ -79,8 +79,8 @@ func IsUsableBlock(b *net.IPNet) bool {
 	return false
 }
 
-func (s *Store) NewIPRange(networkName string, cidr *net.IPNet) (*IPAllocatorRange, error) {
-	s.l.Infof("Creating IPAllocatorRange for: %s", cidr.IP.String())
+func (s *Store) NewIPRange(networkName string, cidr *net.IPNet) (*IPPool, error) {
+	s.l.Infof("Creating IPPool for: %s", cidr.IP.String())
 
 	if !IsUsableBlock(cidr) {
 		return nil, fmt.Errorf("cidr %s is not in an uable private range", cidr)
@@ -92,7 +92,7 @@ func (s *Store) NewIPRange(networkName string, cidr *net.IPNet) (*IPAllocatorRan
 	key := append([]byte(networkName), []byte("-")...)
 	key = append(key, []byte(cidr.IP.String())...)
 
-	i := &IPAllocatorRange{l: s.l, cidr: cidr, db: s.db, lock: &sync.Mutex{}, key: key}
+	i := &IPPool{l: s.l, cidr: cidr, db: s.db, lock: &sync.Mutex{}, key: key}
 
 	var r *IPRange
 	if !exists(txn, prefix_ip_range, key) {
@@ -108,13 +108,13 @@ func (s *Store) NewIPRange(networkName string, cidr *net.IPNet) (*IPAllocatorRan
 
 	err := txn.Commit()
 	if err != nil {
-		return nil, fmt.Errorf("failed to construct IPAllocatorRange: %s %s", cidr.IP.String(), err)
+		return nil, fmt.Errorf("failed to construct IPPool: %s %s", cidr.IP.String(), err)
 	}
 
 	return i, nil
 }
 
-func (r *IPAllocatorRange) save(txn *badger.Txn, ipRange *IPRange) error {
+func (r *IPPool) save(txn *badger.Txn, ipRange *IPRange) error {
 
 	bytes, err := proto.Marshal(ipRange)
 	if err != nil {
@@ -129,7 +129,7 @@ func (r *IPAllocatorRange) save(txn *badger.Txn, ipRange *IPRange) error {
 	return nil
 }
 
-func (r *IPAllocatorRange) get(txn *badger.Txn) (*IPRange, error) {
+func (r *IPPool) get(txn *badger.Txn) (*IPRange, error) {
 
 	t, err := txn.Get(append(prefix_agent, r.key...))
 	if err != nil {

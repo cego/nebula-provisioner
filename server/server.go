@@ -37,7 +37,7 @@ func (s *server) start() error {
 	}
 	s.store = st
 
-	ipManager, err := NewIPManager(st)
+	ipManager, err := NewIPManager(s.l, st)
 	if err != nil {
 		return err
 	}
