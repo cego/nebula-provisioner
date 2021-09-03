@@ -121,11 +121,11 @@ func (s *Store) getEnrollmentTokenByNetwork(txn *badger.Txn, network string) (*E
 	return nil, fmt.Errorf("no token found for: %s", network)
 }
 
-func (s *Store) CreateEnrollmentRequest(clientFingerprint []byte, token string, csrPEM string, ip string) (*EnrollmentRequest, error) {
+func (s *Store) CreateEnrollmentRequest(clientFingerprint []byte, token string, csrPEM string, clientIP string) (*EnrollmentRequest, error) {
 	txn := s.db.NewTransaction(true)
 	defer txn.Discard()
 
-	er, err := s.createEnrollmentRequest(txn, clientFingerprint, token, csrPEM, ip)
+	er, err := s.createEnrollmentRequest(txn, clientFingerprint, token, csrPEM, clientIP)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (s *Store) CreateEnrollmentRequest(clientFingerprint []byte, token string, 
 	return er, err
 }
 
-func (s *Store) createEnrollmentRequest(txn *badger.Txn, clientFingerprint []byte, token string, csrPEM string, ip string) (*EnrollmentRequest, error) {
+func (s *Store) createEnrollmentRequest(txn *badger.Txn, clientFingerprint []byte, token string, csrPEM string, clientIP string) (*EnrollmentRequest, error) {
 	if exists(txn, prefix_enrollment_req, clientFingerprint) {
 		return nil, fmt.Errorf("enrollement request already exists")
 	}
@@ -153,7 +153,7 @@ func (s *Store) createEnrollmentRequest(txn *badger.Txn, clientFingerprint []byt
 		Token:             token,
 		NetworkName:       t.NetworkName,
 		CsrPEM:            csrPEM,
-		ClientIP:          ip,
+		ClientIP:          clientIP,
 	}
 
 	bytes, err := proto.Marshal(e)
@@ -207,11 +207,11 @@ func (s *Store) ListEnrollmentRequests() ([]*EnrollmentRequest, error) {
 	return requests, nil
 }
 
-func (s *Store) ApproveEnrollmentRequest(clientFingerprint []byte) error {
+func (s *Store) ApproveEnrollmentRequest(ipManager *IPManager, clientFingerprint []byte) error {
 	txn := s.db.NewTransaction(true)
 	defer txn.Discard()
 
-	err := s.approveEnrollmentRequest(txn, clientFingerprint)
+	err := s.approveEnrollmentRequest(txn, ipManager, clientFingerprint)
 	if err != nil {
 		return fmt.Errorf("failed to approve enrollment token: %s", err)
 	}
@@ -224,7 +224,7 @@ func (s *Store) ApproveEnrollmentRequest(clientFingerprint []byte) error {
 	return nil
 }
 
-func (s *Store) approveEnrollmentRequest(txn *badger.Txn, clientFingerprint []byte) error {
+func (s *Store) approveEnrollmentRequest(txn *badger.Txn, ipManager *IPManager, clientFingerprint []byte) error {
 
 	er, err := s.getEnrollmentRequest(txn, clientFingerprint)
 	if err != nil {
@@ -235,9 +235,15 @@ func (s *Store) approveEnrollmentRequest(txn *badger.Txn, clientFingerprint []by
 		ClientFingerprint: clientFingerprint,
 		NetworkName:       er.NetworkName,
 		CsrPEM:            er.CsrPEM,
+		Groups:            er.Groups,
 	}
 
-	agent, err = s.signCSR(txn, agent)
+	ip := ipManager.Next(er.NetworkName)
+	if ip == nil {
+		return fmt.Errorf("failed to get ip for agent")
+	}
+
+	agent, err = s.signCSR(txn, agent, ip)
 	if err != nil {
 		return fmt.Errorf("failed to sign agent csr: %s", err)
 	}

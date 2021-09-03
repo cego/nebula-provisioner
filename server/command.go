@@ -53,7 +53,7 @@ type commandServer struct {
 
 	l         *logrus.Logger
 	store     *store.Store
-	ipManager *IPManager
+	ipManager *store.IPManager
 }
 
 func (c *commandServer) Init(ctx context.Context, in *protocol.InitRequest) (*protocol.InitResponse, error) {
@@ -129,7 +129,7 @@ func (c *commandServer) CreateNetwork(ctx context.Context, in *protocol.CreateNe
 	}
 
 	go func() {
-		err := c.ipManager.reload()
+		err := c.ipManager.Reload()
 		if err != nil {
 			c.l.WithError(err).Errorf("failed to reload ip manager after network was created")
 		}
@@ -221,7 +221,7 @@ func (c *commandServer) ApproveEnrollmentRequest(ctx context.Context, req *proto
 		return nil, status.Error(codes.InvalidArgument, "ClientFingerprint is invalid")
 	}
 
-	err = c.store.ApproveEnrollmentRequest(bytes)
+	err = c.store.ApproveEnrollmentRequest(c.ipManager, bytes)
 	if err != nil {
 		c.l.WithError(err).Error("Failed to approve enrollment request")
 		return nil, status.Error(codes.Internal, "Failed to approve enrollment request")

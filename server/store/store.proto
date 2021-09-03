@@ -26,6 +26,7 @@ message EnrollmentRequest {
   string networkName = 4;
   string csrPEM = 5;
   string clientIP = 6;
+  repeated string groups = 7;
 }
 
 message Agent {
@@ -34,6 +35,7 @@ message Agent {
   string networkName = 3;
   repeated string groups = 4;
   string csrPEM = 5;
+  string assignedIP = 6;
 
   string signedPEM = 10;
   google.protobuf.Timestamp issuedAt = 11;

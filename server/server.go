@@ -12,7 +12,7 @@ type server struct {
 	config       *nebula.Config
 	initialized  bool
 	store        *store.Store
-	ipManager    *IPManager
+	ipManager    *store.IPManager
 	unixGrpc     *grpc.Server
 	agentService *grpc.Server
 }
@@ -37,7 +37,7 @@ func (s *server) start() error {
 	}
 	s.store = st
 
-	ipManager, err := NewIPManager(s.l, st)
+	ipManager, err := store.NewIPManager(s.l, st)
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func (s *server) start() error {
 	case _ = <-unsealed:
 		s.l.Infoln("Server is unsealed")
 
-		err = ipManager.reload()
+		err = ipManager.Reload()
 		if err != nil {
 			return err
 		}

@@ -8,10 +8,11 @@ import (
 	"github.com/slackhq/nebula/cert"
 	"github.com/slyngdk/nebula-provisioner/protocol"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"net"
 	"time"
 )
 
-func (s *Store) signCSR(txn *badger.Txn, agent *Agent) (*Agent, error) {
+func (s *Store) signCSR(txn *badger.Txn, agent *Agent, ip *net.IPNet) (*Agent, error) {
 	if agent.NetworkName == "" {
 		return nil, fmt.Errorf("missing network name for agent")
 	}
@@ -56,9 +57,9 @@ func (s *Store) signCSR(txn *badger.Txn, agent *Agent) (*Agent, error) {
 
 	nc := cert.NebulaCertificate{
 		Details: cert.NebulaCertificateDetails{
-			Name: hex.EncodeToString(agent.ClientFingerprint), // TODO friendly name
-			//Ips:       []*net.IPNet{ipNet},
-			//Groups:    groups,
+			Name:   hex.EncodeToString(agent.ClientFingerprint), // TODO friendly name
+			Ips:    []*net.IPNet{ip},
+			Groups: agent.Groups,
 			//Subnets:   subnets,
 			NotBefore: time.Now(),
 			NotAfter:  time.Now().Add(duration), // TODO load default duration from config
@@ -85,6 +86,7 @@ func (s *Store) signCSR(txn *badger.Txn, agent *Agent) (*Agent, error) {
 	agent.SignedPEM = string(b)
 	agent.IssuedAt = timestamppb.New(nc.Details.NotBefore)
 	agent.ExpiresAt = timestamppb.New(nc.Details.NotAfter)
+	agent.AssignedIP = ip.String()
 
 	return agent, nil
 }

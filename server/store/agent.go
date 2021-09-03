@@ -66,3 +66,34 @@ func (s *Store) addAgent(txn *badger.Txn, agent *Agent) (*Agent, error) {
 
 	return agent, nil
 }
+
+func (s *Store) listAgentByNetwork(txn *badger.Txn, networkName string) ([]*Agent, error) {
+	opts := badger.DefaultIteratorOptions
+	opts.PrefetchSize = 10
+	opts.Prefix = prefix_agent
+	it := txn.NewIterator(opts)
+	defer it.Close()
+
+	var agents []*Agent
+
+	for it.Seek(prefix_agent); it.ValidForPrefix(prefix_agent); it.Next() {
+		item := it.Item()
+		err := item.Value(func(v []byte) error {
+			agent := &Agent{}
+			if err := proto.Unmarshal(v, agent); err != nil {
+				s.l.WithError(err).Error("Failed to parse agent")
+				return nil
+			}
+			if networkName == agent.NetworkName {
+				agents = append(agents, agent)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return agents, nil
+}

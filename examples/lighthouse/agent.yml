@@ -1,0 +1,3 @@
+---
+pki:
+  ca: "../server.crt"
