@@ -66,12 +66,66 @@ var enrollStatusCmd = &cobra.Command{
 		}
 	},
 }
+var enrollWaitCmd = &cobra.Command{
+	Use:   "wait",
+	Short: "Wait for enrollment",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+
+		status := getStatus()
+		if status == 2 {
+			return
+		}
+
+		for {
+			select {
+			case _ = <-ticker.C:
+				status := getStatus()
+				if status == 2 {
+					return
+				}
+			}
+		}
+	},
+}
+
+func getStatus() int8 {
+	agent, err := NewClient(l, config)
+	if err != nil {
+		fmt.Printf("failed to create client: %s", err)
+		os.Exit(1)
+	}
+	defer agent.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	res, err := agent.client.GetEnrollStatus(ctx, &emptypb.Empty{})
+	if err != nil {
+		l.WithError(err).Fatalln("failed to get enrollment status")
+	}
+
+	if res.IsEnrolled {
+		l.Info("Agent is enrolled")
+		l.Infof("IssuedAt: %s, ExpiresAt: %s\n", res.IssuedAt.AsTime().Format(time.RFC3339), res.ExpiresAt.AsTime().Format(time.RFC3339))
+		return 2
+	} else if res.IsEnrollmentRequested {
+		l.Info("Agent has requested to be enrolled")
+		return 1
+	} else {
+		l.Info("Agent enrollment not started")
+		return 0
+	}
+}
 
 func init() {
 	enrollCmd.Flags().StringP("token", "t", "", "Enrollment token")
 	enrollCmd.MarkFlagRequired("token")
 
 	enrollCmd.AddCommand(enrollStatusCmd)
+	enrollCmd.AddCommand(enrollWaitCmd)
 }
 
 func enroll(c *agentClient, enrollmentToken string) error {
@@ -84,13 +138,20 @@ func enroll(c *agentClient, enrollmentToken string) error {
 		fmt.Printf("%v\n", err)
 	}
 
+	enrollRequest := &protocol.EnrollRequest{
+		Token:  enrollmentToken,
+		CsrPEM: string(csr),
+	}
+
+	hostname, err := os.Hostname()
+	if err == nil {
+		enrollRequest.Name = hostname
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	res, err := c.client.Enroll(ctx, &protocol.EnrollRequest{
-		Token:  enrollmentToken,
-		CsrPEM: string(csr),
-	})
+	res, err := c.client.Enroll(ctx, enrollRequest)
 	if err != nil {
 		return err
 	}

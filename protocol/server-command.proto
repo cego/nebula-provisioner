@@ -93,6 +93,7 @@ message EnrollmentRequest {
   google.protobuf.Timestamp created = 2;
   string networkName = 3;
   string clientIP = 4;
+  string name = 5;
 }
 
 message ApproveEnrollmentRequestRequest {

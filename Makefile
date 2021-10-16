@@ -37,6 +37,9 @@ server/store/store.pb.go: server/store/store.proto
 	PATH="$(CURDIR):$(PATH)" protoc --go_out=. --go_opt=paths=source_relative $<
 	rm protoc-gen-go
 
+fmt:
+	go fmt ./...
+
 vet:
 	go vet -v ./...
 

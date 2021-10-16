@@ -19,8 +19,7 @@ message EnrollRequest {
   string token = 1;
   string csrPEM = 2;
   repeated string groups = 3;
-
-  // TODO friendly name
+  string name = 4;
 }
 
 message EnrollResponse {
