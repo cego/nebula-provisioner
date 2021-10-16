@@ -59,7 +59,7 @@ var enrollmentPendingCmd = &cobra.Command{
 		}
 
 		for _, request := range res.EnrollmentRequests {
-			fmt.Printf("%s\t%s\t%s\t%s\n", request.NetworkName, request.Created.AsTime().Format(time.RFC3339), request.ClientFingerprint, request.ClientIP)
+			fmt.Printf("%s\t%s\t%s\t%s\t%s\n", request.NetworkName, request.Name, request.Created.AsTime().Format(time.RFC3339), request.ClientFingerprint, request.ClientIP)
 		}
 	},
 }

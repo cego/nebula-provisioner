@@ -64,7 +64,7 @@ func (a *agentService) Enroll(ctx context.Context, request *protocol.EnrollReque
 	addr := p.Addr.String()
 	ip := addr[0:strings.LastIndex(addr, ":")]
 
-	_, err = a.store.CreateEnrollmentRequest(fingerprint, request.Token, request.CsrPEM, ip)
+	_, err = a.store.CreateEnrollmentRequest(fingerprint, request.Token, request.CsrPEM, ip, request.Name)
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("%s", err))
 	}

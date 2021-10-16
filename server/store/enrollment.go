@@ -121,11 +121,11 @@ func (s *Store) getEnrollmentTokenByNetwork(txn *badger.Txn, network string) (*E
 	return nil, fmt.Errorf("no token found for: %s", network)
 }
 
-func (s *Store) CreateEnrollmentRequest(clientFingerprint []byte, token string, csrPEM string, clientIP string) (*EnrollmentRequest, error) {
+func (s *Store) CreateEnrollmentRequest(clientFingerprint []byte, token string, csrPEM string, clientIP string, name string) (*EnrollmentRequest, error) {
 	txn := s.db.NewTransaction(true)
 	defer txn.Discard()
 
-	er, err := s.createEnrollmentRequest(txn, clientFingerprint, token, csrPEM, clientIP)
+	er, err := s.createEnrollmentRequest(txn, clientFingerprint, token, csrPEM, clientIP, name)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (s *Store) CreateEnrollmentRequest(clientFingerprint []byte, token string, 
 	return er, err
 }
 
-func (s *Store) createEnrollmentRequest(txn *badger.Txn, clientFingerprint []byte, token string, csrPEM string, clientIP string) (*EnrollmentRequest, error) {
+func (s *Store) createEnrollmentRequest(txn *badger.Txn, clientFingerprint []byte, token string, csrPEM string, clientIP string, name string) (*EnrollmentRequest, error) {
 	if exists(txn, prefix_enrollment_req, clientFingerprint) {
 		return nil, fmt.Errorf("enrollement request already exists")
 	}
@@ -154,6 +154,7 @@ func (s *Store) createEnrollmentRequest(txn *badger.Txn, clientFingerprint []byt
 		NetworkName:       t.NetworkName,
 		CsrPEM:            csrPEM,
 		ClientIP:          clientIP,
+		Name:              name,
 	}
 
 	bytes, err := proto.Marshal(e)

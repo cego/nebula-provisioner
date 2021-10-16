@@ -199,6 +199,7 @@ func (c *commandServer) ListEnrollmentRequests(context.Context, *emptypb.Empty) 
 			Created:           req.Created,
 			NetworkName:       req.NetworkName,
 			ClientIP:          req.ClientIP,
+			Name:              req.Name,
 		})
 	}
 

@@ -27,6 +27,7 @@ message EnrollmentRequest {
   string csrPEM = 5;
   string clientIP = 6;
   repeated string groups = 7;
+  string name = 8;
 }
 
 message Agent {
