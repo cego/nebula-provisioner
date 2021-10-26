@@ -133,8 +133,8 @@ func NewClient(l *logrus.Logger, config *nebula.Config) (*agentClient, error) {
 
 	opts = append(opts, grpc.WithTransportCredentials(ta))
 
-	//conn, err := grpc.Dial("localhost:51150", opts...) // TODO change address load from config
-	conn, err := grpc.Dial("127.0.0.1:51150", opts...) // TODO change address load from config
+	addr := config.GetString("server", "127.0.0.1:51150")
+	conn, err := grpc.Dial(addr, opts...)
 	if err != nil {
 		return nil, err
 	}

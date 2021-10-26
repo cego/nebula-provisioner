@@ -1,3 +1,15 @@
 ---
 
 # TODO Support loading networks from config
+
+# Save data in directory
+#path: /data/nebula-provisioner
+#listen:
+#  https: ":https"
+#  http: ":http"
+
+#acme:
+#  enabled: true
+  # DNS names the server response on
+  #hosts:
+  #  - nebula-provisioner.example.com

@@ -1,10 +1,18 @@
 package server
 
 import (
+	"crypto/tls"
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"github.com/slackhq/nebula"
+	"github.com/slyngdk/nebula-provisioner/protocol"
 	"github.com/slyngdk/nebula-provisioner/server/store"
+	"golang.org/x/crypto/acme/autocert"
 	"google.golang.org/grpc"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 type server struct {
@@ -31,7 +39,16 @@ func Main(config *nebula.Config, buildVersion string, logger *logrus.Logger) (*C
 func (s *server) start() error {
 	unsealed := make(chan interface{})
 
-	st, err := store.NewStore(s.l, s.config, unsealed)
+	dataDir := s.config.GetString("path", "/tmp/nebula-provisioner")
+	stat, err := os.Stat(dataDir)
+	if err != nil {
+		return err
+	}
+	if !stat.IsDir() {
+		return fmt.Errorf("%s is not a directory", dataDir)
+	}
+
+	st, err := store.NewStore(s.l, dataDir, unsealed)
 	if err != nil {
 		return err
 	}
@@ -66,11 +83,10 @@ func (s *server) start() error {
 		}
 
 		// continue startup when unsealed
-		err = s.startAgentService(st)
+		err := s.startHttpsServer(dataDir)
 		if err != nil {
 			return err
 		}
-
 	}
 
 	return nil
@@ -90,4 +106,86 @@ func (s *server) stop() {
 			s.l.WithError(err).Error("Failed to stop store")
 		}
 	}
+}
+
+func (s *server) startHttpsServer(dataDir string) error {
+	var tlsConfig *tls.Config
+
+	svc := &agentService{
+		l:     s.l,
+		store: s.store,
+	}
+
+	server := grpc.NewServer()
+	protocol.RegisterAgentServiceServer(server, svc)
+
+	httpsSrv := &http.Server{
+		Addr:    s.config.GetString("listen.https", ":51150"),
+		Handler: grpcHandlerFunc(server, httpsHandler()),
+	}
+
+	if s.config.GetBool("acme.enabled", false) {
+		hosts := s.config.GetStringSlice("acme.hosts", []string{})
+		if len(hosts) == 0 {
+			return fmt.Errorf("acme is enabled but no hosts specified 'acme.hosts'")
+		}
+
+		manager := autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			Cache:      autocert.DirCache(filepath.Join(dataDir, "autocert")),
+			HostPolicy: autocert.HostWhitelist(hosts...),
+			Email:      s.config.GetString("acme.email", ""),
+		}
+
+		// Create server for redirecting HTTP to HTTPS
+		httpSrv := &http.Server{
+			Addr:    s.config.GetString("listen.http", ":51151"),
+			Handler: manager.HTTPHandler(nil),
+		}
+		go func() {
+			s.l.Fatal(httpSrv.ListenAndServe())
+		}()
+
+		tlsConfig = manager.TLSConfig()
+	} else {
+
+		cert := s.config.GetString("pki.cert", "server.crt")
+		key := s.config.GetString("pki.key", "server.key")
+
+		keyPair, err := tls.LoadX509KeyPair(cert, key)
+		if err != nil {
+			s.l.WithError(err).Errorf("SERVER: unable to read server key pair: %v", err)
+			return err
+		}
+		tlsConfig = &tls.Config{
+			Certificates: []tls.Certificate{keyPair},
+		}
+	}
+
+	httpsSrv.TLSConfig = tlsConfig
+	httpsSrv.TLSConfig.ClientAuth = tls.RequestClientCert
+
+	go func() {
+		if err := httpsSrv.ListenAndServeTLS("", ""); err != nil {
+			s.l.WithError(err).Errorf("SERVER: failed to serve: %v", err)
+		}
+	}()
+	return nil
+}
+
+func httpsHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+	})
+}
+
+func grpcHandlerFunc(g *grpc.Server, h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ct := r.Header.Get("Content-Type")
+		if r.ProtoMajor == 2 && strings.Contains(ct, "application/grpc") {
+			g.ServeHTTP(w, r)
+		} else {
+			h.ServeHTTP(w, r)
+		}
+	})
 }

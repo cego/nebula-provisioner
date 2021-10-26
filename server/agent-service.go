@@ -3,19 +3,17 @@ package server
 import (
 	"context"
 	"crypto/sha256"
-	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"github.com/slackhq/nebula/cert"
 	"github.com/slyngdk/nebula-provisioner/protocol"
 	"github.com/slyngdk/nebula-provisioner/server/store"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"net"
 	"strings"
 )
 
@@ -34,8 +32,13 @@ func getClientCertFingerprint(ctx context.Context) ([]byte, error) {
 			securityValue := v.GetSecurityValue()
 			switch v := securityValue.(type) {
 			case *credentials.TLSChannelzSecurityValue:
-				sum := sha256.Sum256(v.RemoteCertificate)
-				return sum[:], nil
+				if len(v.RemoteCertificate) != 0 {
+					_, err := x509.ParseCertificate(v.RemoteCertificate)
+					if err == nil {
+						sum := sha256.Sum256(v.RemoteCertificate)
+						return sum[:], nil
+					}
+				}
 			}
 		}
 	}
@@ -119,42 +122,6 @@ func (a *agentService) GetCertificateAuthorityByNetwork(ctx context.Context, req
 	}
 
 	return &protocol.GetCertificateAuthorityByNetworkResponse{CertificateAuthorities: cas}, nil
-}
-
-func (srv *server) startAgentService(s *store.Store) error {
-	srv.l.Println("Starting http agentService server")
-
-	cert := srv.config.GetString("pki.cert", "server.crt")
-	key := srv.config.GetString("pki.key", "server.key")
-
-	keyPair, err := tls.LoadX509KeyPair(cert, key)
-	if err != nil {
-		srv.l.WithError(err).Errorf("SERVER: unable to read server key pair: %v", err)
-		return err
-	}
-	ta := credentials.NewTLS(&tls.Config{
-		Certificates: []tls.Certificate{keyPair},
-		ClientAuth:   tls.RequireAnyClientCert,
-	})
-
-	lis, err := net.Listen("tcp", ":51150") // TODO address from config
-	if err != nil {
-		srv.l.WithError(err).Errorf("SERVER: unable to listen: %v", err)
-		return err
-	}
-	srv.agentService = grpc.NewServer(grpc.Creds(ta))
-	svc := &agentService{
-		l:     srv.l,
-		store: s,
-	}
-	protocol.RegisterAgentServiceServer(srv.agentService, svc)
-
-	go func() {
-		if err := srv.agentService.Serve(lis); err != nil {
-			srv.l.WithError(err).Errorf("Agent Service: failed to serve: %v", err)
-		}
-	}()
-	return nil
 }
 
 func (s *server) stopAgentService() error {

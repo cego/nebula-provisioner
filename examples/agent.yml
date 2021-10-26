@@ -1,3 +1,7 @@
 ---
-pki:
-  ca: "server.crt"
+#pki:
+  # Custom CA to trust
+  #ca: "server.crt"
+
+# Address to the server <host:port>
+#server: "host:port"

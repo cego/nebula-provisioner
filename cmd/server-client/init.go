@@ -64,12 +64,17 @@ func isInit(c *serverClient) error {
 }
 
 func initServer(c *serverClient) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 
+	ctx, cancelCheck := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelCheck()
 	isInitRes, err := c.client.IsInit(ctx, &empty.Empty{})
 	if err != nil {
 		return err
+	}
+
+	if isInitRes.IsInitialized {
+		fmt.Println("Server is already initialized")
+		return nil
 	}
 
 	fmt.Print("How many parts do you want to split the key in? ")
@@ -85,11 +90,8 @@ func initServer(c *serverClient) error {
 		return err
 	}
 
-	if isInitRes.IsInitialized {
-		fmt.Println("Server is already initialized")
-		return nil
-	}
-
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	response, err := c.client.Init(ctx, &protocol.InitRequest{
 		KeyParts:     nParts,
 		KeyThreshold: threshold,

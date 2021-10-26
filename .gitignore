@@ -10,3 +10,4 @@
 *.csr
 *.key
 server/store/*.pb.go
+examples/*.local.yml

@@ -144,7 +144,7 @@ func (s *Store) NewIPPool(networkName string, cidr *net.IPNet) (*IPPool, error) 
 
 	var r *IPRange
 	if !exists(txn, prefix_ip_range, key) {
-		s.l.Info("Adding IP Range : %s on network : %s\n", cidr.IP, networkName)
+		s.l.Infof("Adding IP Range : %s on network : %s\n", cidr.IP, networkName)
 		r = &IPRange{Network: cidr.IP, Netmask: cidr.Mask}
 		err := i.save(txn, r)
 		if err != nil {
