@@ -8,15 +8,14 @@ import (
 	"github.com/dgraph-io/badger/v3"
 	"github.com/hashicorp/vault/shamir"
 	"github.com/sirupsen/logrus"
-	"github.com/slackhq/nebula"
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 )
 
 type Store struct {
 	l        *logrus.Logger
-	config   *nebula.Config
 	unsealed chan interface{}
 	path     string
 	db       *badger.DB
@@ -133,19 +132,26 @@ func (s *Store) Unseal(keyPart string, removeExistingParts bool) error {
 	return nil
 }
 
-func NewStore(l *logrus.Logger, config *nebula.Config, unsealed chan interface{}) (*Store, error) {
-
-	dbPath := config.GetString("db.path", "/tmp/nebula-provisioner/db")
+func NewStore(l *logrus.Logger, dataDir string, unsealed chan interface{}) (*Store, error) {
+	dbPath := filepath.Join(dataDir, "db")
 	stat, err := os.Stat(dbPath)
 	if err != nil {
-		return nil, err
+		if os.IsNotExist(err) {
+			err = os.Mkdir(dbPath, 0700)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
+	} else {
+		if !stat.IsDir() {
+			return nil, fmt.Errorf("%s is not a directory", dbPath)
+		}
+
 	}
 
-	if !stat.IsDir() {
-		return nil, fmt.Errorf("%s is not a directory", dbPath)
-	}
-
-	return &Store{l, config, unsealed, dbPath, nil, make([][]byte, 0)}, nil
+	return &Store{l, unsealed, dbPath, nil, make([][]byte, 0)}, nil
 }
 
 func appendIfMissing(slice [][]byte, b []byte) [][]byte {
