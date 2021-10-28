@@ -13,3 +13,5 @@
   # DNS names the server response on
   #hosts:
   #  - nebula-provisioner.example.com
+
+#db.encrypted: true # Only supported to disable when not a release

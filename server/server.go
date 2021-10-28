@@ -18,6 +18,7 @@ import (
 type server struct {
 	l            *logrus.Logger
 	config       *nebula.Config
+	buildVersion string
 	initialized  bool
 	store        *store.Store
 	ipManager    *store.IPManager
@@ -31,7 +32,7 @@ func Main(config *nebula.Config, buildVersion string, logger *logrus.Logger) (*C
 		FullTimestamp: true,
 	}
 
-	server := server{l, config, false, nil, nil, nil, nil}
+	server := server{l, config, buildVersion, false, nil, nil, nil, nil}
 
 	return &Control{l, server.start, server.stop, make(chan interface{})}, nil
 }
@@ -48,7 +49,9 @@ func (s *server) start() error {
 		return fmt.Errorf("%s is not a directory", dataDir)
 	}
 
-	st, err := store.NewStore(s.l, dataDir, unsealed)
+	encryptionEnabled := !(s.buildVersion == "" && !s.config.GetBool("db.encrypted", true))
+
+	st, err := store.NewStore(s.l, dataDir, unsealed, encryptionEnabled)
 	if err != nil {
 		return err
 	}

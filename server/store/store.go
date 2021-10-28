@@ -64,14 +64,15 @@ func (s *Store) Initialize(numParts, threshold uint32) ([]string, error) {
 
 func (s *Store) open(encryptionKey []byte) error {
 	if !s.IsInitialized() {
-
 		err := ioutil.WriteFile(path.Join(s.path, initFileName), []byte(""), 0600)
 		if err != nil {
 			return fmt.Errorf("Failed to create file %s with error: %s\n", path.Join(s.path, initFileName), err)
 		}
 	}
 	opts := badger.DefaultOptions(s.path)
-	opts.EncryptionKey = encryptionKey
+	if len(encryptionKey) != 0 {
+		opts.EncryptionKey = encryptionKey
+	}
 	opts.IndexCacheSize = 10 << 20 // 10MB
 	opts.Logger = s.l
 
@@ -132,7 +133,7 @@ func (s *Store) Unseal(keyPart string, removeExistingParts bool) error {
 	return nil
 }
 
-func NewStore(l *logrus.Logger, dataDir string, unsealed chan interface{}) (*Store, error) {
+func NewStore(l *logrus.Logger, dataDir string, unsealed chan interface{}, encryptionEnabled bool) (*Store, error) {
 	dbPath := filepath.Join(dataDir, "db")
 	stat, err := os.Stat(dbPath)
 	if err != nil {
@@ -148,10 +149,19 @@ func NewStore(l *logrus.Logger, dataDir string, unsealed chan interface{}) (*Sto
 		if !stat.IsDir() {
 			return nil, fmt.Errorf("%s is not a directory", dbPath)
 		}
-
 	}
 
-	return &Store{l, unsealed, dbPath, nil, make([][]byte, 0)}, nil
+	s := &Store{l, unsealed, dbPath, nil, make([][]byte, 0)}
+
+	if !encryptionEnabled {
+		err = s.open([]byte{})
+		if err != nil {
+			return nil, err
+		}
+		unsealed <- true
+	}
+
+	return s, nil
 }
 
 func appendIfMissing(slice [][]byte, b []byte) [][]byte {
