@@ -16,6 +16,8 @@ else
 	NULL_FILE = /dev/null
 endif
 
+all: bin
+
 bin: protocol server/store/store.pb.go
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/server${CMD_SUFFIX} ${CMD_PATH}/server
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/server-client${CMD_SUFFIX} ${CMD_PATH}/server-client
