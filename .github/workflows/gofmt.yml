@@ -2,7 +2,7 @@ name: gofmt
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     paths:
       - '.github/workflows/gofmt.yml'
