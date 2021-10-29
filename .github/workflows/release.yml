@@ -40,9 +40,6 @@ jobs:
         with:
           name: linux-latest
 
-      - name: Display structure of downloaded files
-        run: ls -R
-
       - name: Create sha256sum
         run: |
           for dir in linux-latest
