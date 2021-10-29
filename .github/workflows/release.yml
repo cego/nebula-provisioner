@@ -95,8 +95,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nebula-linux-amd64.tar.gz
-          asset_name: nebula-linux-amd64.tar.gz
+          asset_path: ./nebula-provisioner-linux-amd64.tar.gz
+          asset_name: nebula-provisioner-linux-amd64.tar.gz
           asset_content_type: application/gzip
 
       - name: Upload linux-386
@@ -105,6 +105,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nebula-linux-386.tar.gz
-          asset_name: nebula-linux-386.tar.gz
+          asset_path: ./nebula-provisioner-linux-386.tar.gz
+          asset_name: nebula-provisioner-linux-386.tar.gz
           asset_content_type: application/gzip
