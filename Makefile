@@ -16,16 +16,30 @@ else
 	NULL_FILE = /dev/null
 endif
 
-all: build/server build/server-client build/agent
+ALL = linux-amd64 \
+	linux-386
 
-build/server: .FORCE
-	go build $(BUILD_ARGS) -o $@ -ldflags "$(LDFLAGS)" ${CMD_PATH}/server
+all: $(ALL:%=build/%/server) $(ALL:%=build/%/server-client) $(ALL:%=build/%/agent)
 
-build/server-client: .FORCE
-	go build $(BUILD_ARGS) -o $@ -ldflags "$(LDFLAGS)" ${CMD_PATH}/server-client
+release: $(ALL:%=build/nebula-provisioner-%.tar.gz)
 
-build/agent: .FORCE
-	go build $(BUILD_ARGS) -o $@ -ldflags "$(LDFLAGS)" ${CMD_PATH}/agent
+build/%/server: .FORCE
+	GOOS=$(firstword $(subst -, , $*)) \
+    		GOARCH=$(word 2, $(subst -, ,$*)) $(GOENV) \
+			go build $(BUILD_ARGS) -o $@ -ldflags "$(LDFLAGS)" ${CMD_PATH}/server
+
+build/%/server-client: .FORCE
+	GOOS=$(firstword $(subst -, , $*)) \
+    		GOARCH=$(word 2, $(subst -, ,$*)) $(GOENV) \
+			go build $(BUILD_ARGS) -o $@ -ldflags "$(LDFLAGS)" ${CMD_PATH}/server-client
+
+build/%/agent: .FORCE
+	GOOS=$(firstword $(subst -, , $*)) \
+    		GOARCH=$(word 2, $(subst -, ,$*)) $(GOENV) \
+			go build $(BUILD_ARGS) -o $@ -ldflags "$(LDFLAGS)" ${CMD_PATH}/agent
+
+build/nebula-provisioner-%.tar.gz: build/%/server build/%/server-client build/%/agent
+	tar -zcv -C build/$* -f $@ server server-client agent
 
 bin: protocol server/store/store.pb.go
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/server${CMD_SUFFIX} ${CMD_PATH}/server

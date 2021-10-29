@@ -3,6 +3,7 @@
 
 /bin/
 /build/
+/release/
 /protocol/protoc-gen-go
 /protocol/protoc-gen-go-grpc
 *.pem
