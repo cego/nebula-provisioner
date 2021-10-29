@@ -39,6 +39,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: linux-latest
+          path: linux-latest
 
       - name: Create sha256sum
         run: |
@@ -92,7 +93,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nebula-provisioner-linux-amd64.tar.gz
+          asset_path: ./linux-latest/nebula-provisioner-linux-amd64.tar.gz
           asset_name: nebula-provisioner-linux-amd64.tar.gz
           asset_content_type: application/gzip
 
@@ -102,6 +103,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./nebula-provisioner-linux-386.tar.gz
+          asset_path: ./linux-latest/nebula-provisioner-linux-386.tar.gz
           asset_name: nebula-provisioner-linux-386.tar.gz
           asset_content_type: application/gzip
