@@ -35,7 +35,7 @@ jobs:
             ${{ runner.os }}-go1.17-
 
       - name: Build
-        run: make
+        run: make all
 
       - name: Test
         run: make test
