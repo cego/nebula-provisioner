@@ -5,13 +5,14 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"github.com/dgraph-io/badger/v3"
-	"github.com/hashicorp/vault/shamir"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/dgraph-io/badger/v3"
+	"github.com/hashicorp/vault/shamir"
+	"github.com/sirupsen/logrus"
 )
 
 type Store struct {

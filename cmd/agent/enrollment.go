@@ -4,15 +4,16 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"time"
+
 	"github.com/slackhq/nebula/cert"
 	"github.com/slyngdk/nebula-provisioner/protocol"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/curve25519"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"io"
-	"io/ioutil"
-	"os"
-	"time"
 )
 
 var enrollCmd = &cobra.Command{

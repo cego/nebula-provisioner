@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"fmt"
+	"strings"
+
 	"github.com/sirupsen/logrus"
 	"github.com/slackhq/nebula/cert"
 	"github.com/slyngdk/nebula-provisioner/protocol"
@@ -14,7 +16,6 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"strings"
 )
 
 type agentService struct {

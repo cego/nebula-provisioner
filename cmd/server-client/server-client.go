@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/slackhq/nebula"
 	"github.com/slyngdk/nebula-provisioner/protocol"
 	"google.golang.org/grpc"

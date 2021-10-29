@@ -2,11 +2,12 @@ package store
 
 import (
 	"fmt"
+	"net"
+	"sync"
+
 	"github.com/dgraph-io/badger/v3"
 	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
-	"net"
-	"sync"
 )
 
 var usableIPBlocks []*net.IPNet

@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/slyngdk/nebula-provisioner/protocol"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"os"
-	"time"
 )
 
 var enrollCmd = &cobra.Command{

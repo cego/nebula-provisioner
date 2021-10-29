@@ -5,11 +5,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"strings"
+
 	"github.com/dgraph-io/badger/v3"
 	"github.com/golang/protobuf/proto"
 	"github.com/slyngdk/nebula-provisioner/protocol"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"strings"
 )
 
 func (s *Store) generateEnrollmentToken(txn *badger.Txn, network string) (*EnrollmentToken, error) {
