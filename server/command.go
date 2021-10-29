@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"net"
+
 	"github.com/sirupsen/logrus"
 	"github.com/slyngdk/nebula-provisioner/protocol"
 	"github.com/slyngdk/nebula-provisioner/server/store"
@@ -11,7 +13,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"net"
 )
 
 func (srv *server) startUnixSocket(s *store.Store) error {

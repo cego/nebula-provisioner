@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/slyngdk/nebula-provisioner/protocol"
 	"github.com/spf13/cobra"
-	"os"
-	"time"
 )
 
 var initCmd = &cobra.Command{

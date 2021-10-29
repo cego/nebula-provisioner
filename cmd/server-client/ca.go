@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/slyngdk/nebula-provisioner/protocol"
-	"github.com/spf13/cobra"
 	"os"
 	"time"
+
+	"github.com/slyngdk/nebula-provisioner/protocol"
+	"github.com/spf13/cobra"
 )
 
 var caCmd = &cobra.Command{

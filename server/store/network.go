@@ -4,13 +4,14 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"fmt"
+	"net"
+	"strings"
+	"time"
+
 	"github.com/dgraph-io/badger/v3"
 	"github.com/golang/protobuf/proto"
 	"github.com/slackhq/nebula/cert"
 	"github.com/slyngdk/nebula-provisioner/protocol"
-	"net"
-	"strings"
-	"time"
 )
 
 func (s *Store) ListNetworks() ([]*protocol.Network, error) {

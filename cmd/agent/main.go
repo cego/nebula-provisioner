@@ -8,17 +8,18 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"io/ioutil"
+	"math"
+	"math/big"
+	"os"
+	"time"
+
 	"github.com/sirupsen/logrus"
 	"github.com/slackhq/nebula"
 	"github.com/slyngdk/nebula-provisioner/protocol"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"io/ioutil"
-	"math"
-	"math/big"
-	"os"
-	"time"
 )
 
 // Build A version string that can be set with

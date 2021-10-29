@@ -2,9 +2,10 @@ package store
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net"
 	"sync"
+
+	"github.com/sirupsen/logrus"
 )
 
 type IPManager struct {

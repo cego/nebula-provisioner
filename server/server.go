@@ -3,16 +3,17 @@ package server
 import (
 	"crypto/tls"
 	"fmt"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/sirupsen/logrus"
 	"github.com/slackhq/nebula"
 	"github.com/slyngdk/nebula-provisioner/protocol"
 	"github.com/slyngdk/nebula-provisioner/server/store"
 	"golang.org/x/crypto/acme/autocert"
 	"google.golang.org/grpc"
-	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 type server struct {

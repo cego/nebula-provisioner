@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/slyngdk/nebula-provisioner/protocol"
-	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	"regexp"
 	"time"
+
+	"github.com/slyngdk/nebula-provisioner/protocol"
+	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 var unsealCmd = &cobra.Command{

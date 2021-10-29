@@ -3,13 +3,14 @@ package store
 import (
 	"encoding/hex"
 	"fmt"
+	"net"
+	"time"
+
 	"github.com/dgraph-io/badger/v3"
 	"github.com/golang/protobuf/proto"
 	"github.com/slackhq/nebula/cert"
 	"github.com/slyngdk/nebula-provisioner/protocol"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"net"
-	"time"
 )
 
 func (s *Store) signCSR(txn *badger.Txn, agent *Agent, ip *net.IPNet) (*Agent, error) {

@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/types/known/emptypb"
 	"io/ioutil"
 	"os"
 	"time"
+
+	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 var exportCmd = &cobra.Command{
