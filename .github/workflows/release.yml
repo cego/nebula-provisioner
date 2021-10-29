@@ -25,7 +25,7 @@ jobs:
           mv build/*.tar.gz release
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: linux-latest
           path: release
@@ -36,9 +36,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Linux artifacts
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: linux-latest
+
+      - name: Display structure of downloaded files
+        run: ls -R
 
       - name: Create sha256sum
         run: |
