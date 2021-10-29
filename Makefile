@@ -16,12 +16,16 @@ else
 	NULL_FILE = /dev/null
 endif
 
-ALL = linux-amd64 \
+ALL_LINUX = linux-amd64 \
 	linux-386
+
+ALL = $(ALL_LINUX)
 
 all: $(ALL:%=build/%/server) $(ALL:%=build/%/server-client) $(ALL:%=build/%/agent)
 
 release: $(ALL:%=build/nebula-provisioner-%.tar.gz)
+
+release-linux: $(ALL_LINUX:%=build/nebula-%.tar.gz)
 
 build/%/server: .FORCE
 	GOOS=$(firstword $(subst -, , $*)) \

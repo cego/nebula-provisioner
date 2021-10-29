@@ -7,7 +7,7 @@ name: Create release and upload binaries
 
 jobs:
   build-linux:
-    name: Build Linux
+    name: Build Linux All
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.17
@@ -20,7 +20,7 @@ jobs:
 
       - name: Build
         run: |
-          make BUILD_NUMBER="${GITHUB_REF#refs/tags/v}" release
+          make BUILD_NUMBER="${GITHUB_REF#refs/tags/v}" release-linux
           mkdir release
           mv build/*.tar.gz release
 
@@ -94,4 +94,14 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./linux-latest/nebula-linux-amd64.tar.gz
           asset_name: nebula-linux-amd64.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload linux-386
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./linux-latest/nebula-linux-386.tar.gz
+          asset_name: nebula-linux-386.tar.gz
           asset_content_type: application/gzip
