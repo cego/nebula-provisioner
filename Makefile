@@ -25,7 +25,7 @@ all: $(ALL:%=build/%/server) $(ALL:%=build/%/server-client) $(ALL:%=build/%/agen
 
 release: $(ALL:%=build/nebula-provisioner-%.tar.gz)
 
-release-linux: $(ALL_LINUX:%=build/nebula-%.tar.gz)
+release-linux: $(ALL_LINUX:%=build/nebula-provisioner-%.tar.gz)
 
 build/%/server: .FORCE
 	GOOS=$(firstword $(subst -, , $*)) \
