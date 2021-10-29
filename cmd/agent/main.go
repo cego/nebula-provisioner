@@ -28,6 +28,11 @@ import (
 // at compile-time.
 var Build string
 
+const AgentNebulaCsrPath = "agent-nebula.csr"
+const AgentNebulaKeyPath = "agent-nebula.key"
+const AgentNebulaCrtPath = "agent-nebula.crt"
+const AgentNebulaCaPath = "agent-nebula-ca.crt"
+
 var (
 	l          *logrus.Logger
 	configPath string
@@ -51,7 +56,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVarP(&configPath, "config", "c", "agent.yml", "Path to either a file or directory to load configuration from")
 
-	rootCmd.AddCommand(enrollCmd, exportCmd)
+	rootCmd.AddCommand(configCmd, enrollCmd, exportCmd)
 }
 
 func initConfig() {
@@ -146,17 +151,6 @@ func NewClient(l *logrus.Logger, config *nebula.Config) (*agentClient, error) {
 
 func (c agentClient) Close() error {
 	return c.conn.Close()
-}
-
-func fileExists(filepath string) (bool, os.FileInfo) {
-
-	fileinfo, err := os.Stat(filepath)
-
-	if os.IsNotExist(err) {
-		return false, fileinfo
-	}
-	// Return false if the fileinfo says the file path is a directory.
-	return !fileinfo.IsDir(), fileinfo
 }
 
 func generateAgentKeyPair(cert, key string) error {

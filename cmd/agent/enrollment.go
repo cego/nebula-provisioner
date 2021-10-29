@@ -66,6 +66,7 @@ var enrollStatusCmd = &cobra.Command{
 		}
 	},
 }
+
 var enrollWaitCmd = &cobra.Command{
 	Use:   "wait",
 	Short: "Wait for enrollment",
@@ -75,6 +76,10 @@ var enrollWaitCmd = &cobra.Command{
 		defer ticker.Stop()
 
 		status := getStatus()
+		if status == 0 {
+			l.Errorln("Require the enrollment has been started")
+			os.Exit(1)
+		}
 		if status == 2 {
 			return
 		}
@@ -166,11 +171,11 @@ func generateNebulaKeyPair() ([]byte, error) {
 	var csr []byte
 	var err error
 
-	exists, info := fileExists("agent-nebula.csr")
+	exists, info := fileExists(AgentNebulaCsrPath)
 	if exists && info.IsDir() {
 		return nil, fmt.Errorf("expected agent-nebula.csr to be a file")
 	} else if exists {
-		csr, err = ioutil.ReadFile("agent-nebula.csr")
+		csr, err = ioutil.ReadFile(AgentNebulaCsrPath)
 		if err != nil {
 			return nil, fmt.Errorf("error while reading csr: %s", err)
 		}
@@ -181,13 +186,13 @@ func generateNebulaKeyPair() ([]byte, error) {
 		}
 		curve25519.ScalarBaseMult(&pubkey, &privkey)
 
-		err := ioutil.WriteFile("agent-nebula.key", cert.MarshalX25519PrivateKey(privkey[:]), 0600)
+		err := ioutil.WriteFile(AgentNebulaKeyPath, cert.MarshalX25519PrivateKey(privkey[:]), 0600)
 		if err != nil {
 			return nil, fmt.Errorf("error while writing key: %s", err)
 		}
 
 		csr = cert.MarshalX25519PublicKey(pubkey[:])
-		err = ioutil.WriteFile("agent-nebula.csr", csr, 0600)
+		err = ioutil.WriteFile(AgentNebulaCsrPath, csr, 0600)
 		if err != nil {
 			return nil, fmt.Errorf("error while writing csr: %s", err)
 		}
