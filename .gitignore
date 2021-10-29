@@ -2,13 +2,12 @@
 *.iml
 
 /bin/
-/protocol/*.pb.go
+/build/
 /protocol/protoc-gen-go
 /protocol/protoc-gen-go-grpc
 *.pem
 *.crt
 *.csr
 *.key
-server/store/*.pb.go
 examples/*.local.yml
 examples/nebula

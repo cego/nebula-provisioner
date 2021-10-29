@@ -16,6 +16,17 @@ else
 	NULL_FILE = /dev/null
 endif
 
+all: build/server build/server-client build/agent
+
+build/server: .FORCE
+	go build $(BUILD_ARGS) -o $@ -ldflags "$(LDFLAGS)" ${CMD_PATH}/server
+
+build/server-client: .FORCE
+	go build $(BUILD_ARGS) -o $@ -ldflags "$(LDFLAGS)" ${CMD_PATH}/server-client
+
+build/agent: .FORCE
+	go build $(BUILD_ARGS) -o $@ -ldflags "$(LDFLAGS)" ${CMD_PATH}/agent
+
 bin: protocol server/store/store.pb.go
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/server${CMD_SUFFIX} ${CMD_PATH}/server
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/server-client${CMD_SUFFIX} ${CMD_PATH}/server-client
