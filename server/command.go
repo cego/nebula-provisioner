@@ -57,7 +57,7 @@ type commandServer struct {
 	ipManager *store.IPManager
 }
 
-func (c *commandServer) Init(ctx context.Context, in *protocol.InitRequest) (*protocol.InitResponse, error) {
+func (c *commandServer) Init(_ context.Context, in *protocol.InitRequest) (*protocol.InitResponse, error) {
 
 	if c.store.IsInitialized() {
 		return nil, status.Error(codes.FailedPrecondition, "Server is already initialized")
@@ -76,7 +76,7 @@ func (c *commandServer) IsInit(context.Context, *emptypb.Empty) (*protocol.IsIni
 	return &protocol.IsInitResponse{IsInitialized: c.store.IsInitialized()}, nil
 }
 
-func (c *commandServer) Unseal(ctx context.Context, in *protocol.UnsealRequest) (*protocol.UnsealResponse, error) {
+func (c *commandServer) Unseal(_ context.Context, in *protocol.UnsealRequest) (*protocol.UnsealResponse, error) {
 	c.l.Infof("Recived unseal request")
 
 	if len(in.KeyPart) <= 0 {
@@ -100,7 +100,7 @@ func (c *commandServer) Unseal(ctx context.Context, in *protocol.UnsealRequest) 
 	return &protocol.UnsealResponse{}, nil
 }
 
-func (c *commandServer) CreateNetwork(ctx context.Context, in *protocol.CreateNetworkRequest) (*protocol.CreateNetworkResponse, error) {
+func (c *commandServer) CreateNetwork(_ context.Context, in *protocol.CreateNetworkRequest) (*protocol.CreateNetworkResponse, error) {
 	if !c.store.IsOpen() {
 		return nil, status.Error(codes.FailedPrecondition, "Server is not unsealed")
 	}
@@ -139,7 +139,7 @@ func (c *commandServer) CreateNetwork(ctx context.Context, in *protocol.CreateNe
 	return &protocol.CreateNetworkResponse{Network: n}, nil
 }
 
-func (c *commandServer) ListNetwork(ctx context.Context, in *protocol.ListNetworkRequest) (*protocol.ListNetworkResponse, error) {
+func (c *commandServer) ListNetwork(context.Context, *protocol.ListNetworkRequest) (*protocol.ListNetworkResponse, error) {
 	if !c.store.IsOpen() {
 		return nil, status.Error(codes.FailedPrecondition, "Server is not unsealed")
 	}
@@ -153,7 +153,7 @@ func (c *commandServer) ListNetwork(ctx context.Context, in *protocol.ListNetwor
 	return &protocol.ListNetworkResponse{Networks: nets}, nil
 }
 
-func (c *commandServer) ListCertificateAuthorityByNetwork(ctx context.Context, in *protocol.ListCertificateAuthorityByNetworkRequest) (*protocol.ListCertificateAuthorityByNetworkResponse, error) {
+func (c *commandServer) ListCertificateAuthorityByNetwork(_ context.Context, in *protocol.ListCertificateAuthorityByNetworkRequest) (*protocol.ListCertificateAuthorityByNetworkResponse, error) {
 	if !c.store.IsOpen() {
 		return nil, status.Error(codes.FailedPrecondition, "Server is not unsealed")
 	}
@@ -167,7 +167,7 @@ func (c *commandServer) ListCertificateAuthorityByNetwork(ctx context.Context, i
 	return &protocol.ListCertificateAuthorityByNetworkResponse{CertificateAuthorities: cas}, nil
 }
 
-func (c *commandServer) GetEnrollmentTokenForNetwork(ctx context.Context, in *protocol.GetEnrollmentTokenForNetworkRequest) (*protocol.GetEnrollmentTokenForNetworkResponse, error) {
+func (c *commandServer) GetEnrollmentTokenForNetwork(_ context.Context, in *protocol.GetEnrollmentTokenForNetworkRequest) (*protocol.GetEnrollmentTokenForNetworkResponse, error) {
 	if !c.store.IsOpen() {
 		return nil, status.Error(codes.FailedPrecondition, "Server is not unsealed")
 	}
@@ -209,7 +209,7 @@ func (c *commandServer) ListEnrollmentRequests(context.Context, *emptypb.Empty) 
 	}, nil
 }
 
-func (c *commandServer) ApproveEnrollmentRequest(ctx context.Context, req *protocol.ApproveEnrollmentRequestRequest) (*emptypb.Empty, error) {
+func (c *commandServer) ApproveEnrollmentRequest(_ context.Context, req *protocol.ApproveEnrollmentRequestRequest) (*emptypb.Empty, error) {
 	if !c.store.IsOpen() {
 		return nil, status.Error(codes.FailedPrecondition, "Server is not unsealed")
 	}
@@ -227,6 +227,60 @@ func (c *commandServer) ApproveEnrollmentRequest(ctx context.Context, req *proto
 	if err != nil {
 		c.l.WithError(err).Error("Failed to approve enrollment request")
 		return nil, status.Error(codes.Internal, "Failed to approve enrollment request")
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+func (c *commandServer) ListUsersWaitingForApproval(context.Context, *emptypb.Empty) (*protocol.ListUsersResponse, error) {
+	if !c.store.IsOpen() {
+		return nil, status.Error(codes.FailedPrecondition, "Server is not unsealed")
+	}
+
+	users, err := c.store.ListUsersWaitingForApproval()
+	if err != nil {
+		c.l.WithError(err)
+		return nil, status.Error(codes.Internal, fmt.Sprintf("%s", err))
+	}
+
+	mUsers := make([]*protocol.User, len(users))
+
+	for _, u := range users {
+		var a *protocol.UserApprove
+		if u.Approve != nil {
+			a = &protocol.UserApprove{
+				Approved:   u.Approve.Approved,
+				ApprovedBy: u.Approve.ApprovedBy,
+				ApprovedAt: u.Approve.ApprovedAt,
+			}
+		}
+
+		mUsers = append(mUsers, &protocol.User{
+			Id:      u.Id,
+			Name:    u.Name,
+			Email:   u.Email,
+			Created: u.Created,
+			Approve: a,
+		})
+	}
+
+	return &protocol.ListUsersResponse{
+		Users: mUsers,
+	}, nil
+}
+
+func (c *commandServer) ApproveUserAccess(_ context.Context, req *protocol.ApproveUserAccessRequest) (*emptypb.Empty, error) {
+	if !c.store.IsOpen() {
+		return nil, status.Error(codes.FailedPrecondition, "Server is not unsealed")
+	}
+
+	if req.UserId == "" {
+		return nil, status.Error(codes.InvalidArgument, "userId is required")
+	}
+
+	_, err := c.store.ApproveUserAccess(req.UserId, &store.UserApprove{Approved: true, ApprovedBy: "server-client"})
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Failed to to approve user access: %s", err))
 	}
 
 	return &emptypb.Empty{}, nil

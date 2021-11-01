@@ -4,7 +4,6 @@ CMD_PATH = "./cmd/"
 
 # Set up OS specific bits
 ifeq ($(OS),Windows_NT)
-	#TODO: we should be able to ditch awk as well
 	GOVERSION := $(shell go version | awk "{print substr($$3, 3)}")
 	GOISMIN := $(shell IF "$(GOVERSION)" GEQ "$(GOMINVERSION)" ECHO 1)
 	CMD_SUFFIX = .exe
@@ -45,7 +44,7 @@ build/%/agent: .FORCE
 build/nebula-provisioner-%.tar.gz: build/%/server build/%/server-client build/%/agent
 	tar -zcv -C build/$* -f $@ server server-client agent
 
-bin: protocol server/store/store.pb.go
+bin: protocol server/store/store.pb.go impsort
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/server${CMD_SUFFIX} ${CMD_PATH}/server
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/server-client${CMD_SUFFIX} ${CMD_PATH}/server-client
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/agent${CMD_SUFFIX} ${CMD_PATH}/agent
@@ -75,6 +74,14 @@ vet:
 test:
 	go test -v ./...
 
+impsort:
+	go build golang.org/x/tools/cmd/goimports
+	find . -iname '*.go' | grep -v '\.pb\.go$$' | xargs ./goimports -w
+	rm -f ./goimports
+
+webapp:
+	$(MAKE) -C webapp build
+
 .FORCE:
-.PHONY: test bin protocol
+.PHONY: test bin protocol webapp
 .DEFAULT_GOAL := bin

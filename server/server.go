@@ -39,7 +39,7 @@ func Main(config *nebula.Config, buildVersion string, logger *logrus.Logger) (*C
 }
 
 func (s *server) start() error {
-	unsealed := make(chan interface{})
+	unsealed := make(chan interface{}, 1)
 
 	dataDir := s.config.GetString("path", "/tmp/nebula-provisioner")
 	stat, err := os.Stat(dataDir)
@@ -123,9 +123,14 @@ func (s *server) startHttpsServer(dataDir string) error {
 	server := grpc.NewServer()
 	protocol.RegisterAgentServiceServer(server, svc)
 
+	frontend, err := NewFrontend(s.config, s.l, s.store)
+	if err != nil {
+		return err
+	}
+
 	httpsSrv := &http.Server{
 		Addr:    s.config.GetString("listen.https", ":51150"),
-		Handler: grpcHandlerFunc(server, httpsHandler()),
+		Handler: grpcHandlerFunc(server, frontend.ServeHTTP()),
 	}
 
 	if s.config.GetBool("acme.enabled", false) {
@@ -175,12 +180,6 @@ func (s *server) startHttpsServer(dataDir string) error {
 		}
 	}()
 	return nil
-}
-
-func httpsHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(404)
-	})
 }
 
 func grpcHandlerFunc(g *grpc.Server, h http.Handler) http.Handler {

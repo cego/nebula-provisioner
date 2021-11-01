@@ -28,6 +28,8 @@ type ServerCommandClient interface {
 	GetEnrollmentTokenForNetwork(ctx context.Context, in *GetEnrollmentTokenForNetworkRequest, opts ...grpc.CallOption) (*GetEnrollmentTokenForNetworkResponse, error)
 	ListEnrollmentRequests(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListEnrollmentRequestsResponse, error)
 	ApproveEnrollmentRequest(ctx context.Context, in *ApproveEnrollmentRequestRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ListUsersWaitingForApproval(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListUsersResponse, error)
+	ApproveUserAccess(ctx context.Context, in *ApproveUserAccessRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type serverCommandClient struct {
@@ -119,6 +121,24 @@ func (c *serverCommandClient) ApproveEnrollmentRequest(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *serverCommandClient) ListUsersWaitingForApproval(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListUsersResponse, error) {
+	out := new(ListUsersResponse)
+	err := c.cc.Invoke(ctx, "/protocol.ServerCommand/ListUsersWaitingForApproval", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *serverCommandClient) ApproveUserAccess(ctx context.Context, in *ApproveUserAccessRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/protocol.ServerCommand/ApproveUserAccess", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ServerCommandServer is the server API for ServerCommand service.
 // All implementations must embed UnimplementedServerCommandServer
 // for forward compatibility
@@ -132,6 +152,8 @@ type ServerCommandServer interface {
 	GetEnrollmentTokenForNetwork(context.Context, *GetEnrollmentTokenForNetworkRequest) (*GetEnrollmentTokenForNetworkResponse, error)
 	ListEnrollmentRequests(context.Context, *emptypb.Empty) (*ListEnrollmentRequestsResponse, error)
 	ApproveEnrollmentRequest(context.Context, *ApproveEnrollmentRequestRequest) (*emptypb.Empty, error)
+	ListUsersWaitingForApproval(context.Context, *emptypb.Empty) (*ListUsersResponse, error)
+	ApproveUserAccess(context.Context, *ApproveUserAccessRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedServerCommandServer()
 }
 
@@ -165,6 +187,12 @@ func (UnimplementedServerCommandServer) ListEnrollmentRequests(context.Context, 
 }
 func (UnimplementedServerCommandServer) ApproveEnrollmentRequest(context.Context, *ApproveEnrollmentRequestRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ApproveEnrollmentRequest not implemented")
+}
+func (UnimplementedServerCommandServer) ListUsersWaitingForApproval(context.Context, *emptypb.Empty) (*ListUsersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUsersWaitingForApproval not implemented")
+}
+func (UnimplementedServerCommandServer) ApproveUserAccess(context.Context, *ApproveUserAccessRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ApproveUserAccess not implemented")
 }
 func (UnimplementedServerCommandServer) mustEmbedUnimplementedServerCommandServer() {}
 
@@ -341,6 +369,42 @@ func _ServerCommand_ApproveEnrollmentRequest_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ServerCommand_ListUsersWaitingForApproval_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServerCommandServer).ListUsersWaitingForApproval(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/protocol.ServerCommand/ListUsersWaitingForApproval",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServerCommandServer).ListUsersWaitingForApproval(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ServerCommand_ApproveUserAccess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ApproveUserAccessRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServerCommandServer).ApproveUserAccess(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/protocol.ServerCommand/ApproveUserAccess",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServerCommandServer).ApproveUserAccess(ctx, req.(*ApproveUserAccessRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ServerCommand_ServiceDesc is the grpc.ServiceDesc for ServerCommand service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -383,6 +447,14 @@ var ServerCommand_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ApproveEnrollmentRequest",
 			Handler:    _ServerCommand_ApproveEnrollmentRequest_Handler,
+		},
+		{
+			MethodName: "ListUsersWaitingForApproval",
+			Handler:    _ServerCommand_ListUsersWaitingForApproval_Handler,
+		},
+		{
+			MethodName: "ApproveUserAccess",
+			Handler:    _ServerCommand_ApproveUserAccess_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

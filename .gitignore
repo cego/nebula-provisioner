@@ -10,5 +10,6 @@
 *.crt
 *.csr
 *.key
+./goimports
 examples/*.local.yml
 examples/nebula

@@ -32,7 +32,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVarP(&configPath, "config", "c", "", "Path to either a file or directory to load configuration from")
 
-	rootCmd.AddCommand(initCmd, unsealCmd, networkCmd, caCmd, enrollCmd)
+	rootCmd.AddCommand(initCmd, unsealCmd, networkCmd, caCmd, enrollCmd, userCmd)
 }
 
 func initConfig() {
