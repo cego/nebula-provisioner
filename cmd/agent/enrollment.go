@@ -72,14 +72,28 @@ var enrollWaitCmd = &cobra.Command{
 	Use:   "wait",
 	Short: "Wait for enrollment",
 	Run: func(cmd *cobra.Command, args []string) {
+		agent, err := NewClient(l, config)
+		if err != nil {
+			fmt.Printf("failed to create client: %s", err)
+			os.Exit(1)
+		}
+		defer agent.Close()
 
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
 
-		status := getStatus()
+		status := getStatus(agent)
 		if status == 0 {
-			l.Errorln("Require the enrollment has been started")
-			os.Exit(1)
+			token, _ := cmd.Flags().GetString("token")
+			if token != "" {
+				if err := enroll(agent, token); err != nil {
+					l.WithError(err).Fatalln("failed to enroll to server")
+					os.Exit(2)
+				}
+			} else {
+				l.Errorln("Require the enrollment has been started, you can provide enrollment token and doing it in one process.")
+				os.Exit(1)
+			}
 		}
 		if status == 2 {
 			return
@@ -88,8 +102,9 @@ var enrollWaitCmd = &cobra.Command{
 		for {
 			select {
 			case _ = <-ticker.C:
-				status := getStatus()
+				status := getStatus(agent)
 				if status == 2 {
+					l.Info("Agent is now enrolled")
 					return
 				}
 			}
@@ -97,14 +112,7 @@ var enrollWaitCmd = &cobra.Command{
 	},
 }
 
-func getStatus() int8 {
-	agent, err := NewClient(l, config)
-	if err != nil {
-		fmt.Printf("failed to create client: %s", err)
-		os.Exit(1)
-	}
-	defer agent.Close()
-
+func getStatus(agent *agentClient) int8 {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -129,6 +137,7 @@ func getStatus() int8 {
 func init() {
 	enrollCmd.Flags().StringP("token", "t", "", "Enrollment token")
 	enrollCmd.MarkFlagRequired("token")
+	enrollWaitCmd.Flags().StringP("token", "t", "", "Enrollment token")
 
 	enrollCmd.AddCommand(enrollStatusCmd)
 	enrollCmd.AddCommand(enrollWaitCmd)
