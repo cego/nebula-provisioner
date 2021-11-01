@@ -39,7 +39,7 @@ func Main(config *nebula.Config, buildVersion string, logger *logrus.Logger) (*C
 }
 
 func (s *server) start() error {
-	unsealed := make(chan interface{})
+	unsealed := make(chan interface{}, 1)
 
 	dataDir := s.config.GetString("path", "/tmp/nebula-provisioner")
 	stat, err := os.Stat(dataDir)
