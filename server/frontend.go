@@ -5,14 +5,19 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"io/fs"
 	"io/ioutil"
 	mrand "math/rand"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
+	"github.com/slyngdk/nebula-provisioner/server/graph/model"
 	"github.com/slyngdk/nebula-provisioner/webapp"
+
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/slyngdk/nebula-provisioner/server/graph"
+	"github.com/slyngdk/nebula-provisioner/server/graph/generated"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -28,6 +33,7 @@ type frontend struct {
 	sessions     sessions.Store
 	oauth2Config oauth2.Config
 	store        *store.Store
+	ipManager    *store.IPManager
 
 	config *nebula.Config
 	l      *logrus.Logger
@@ -39,7 +45,7 @@ type userInfo struct {
 	email string
 }
 
-func NewFrontend(config *nebula.Config, logger *logrus.Logger, store *store.Store) (*frontend, error) {
+func NewFrontend(config *nebula.Config, logger *logrus.Logger, store *store.Store, ipManager *store.IPManager) (*frontend, error) {
 
 	// Hash keys should be at least 32 bytes long
 	authenticationKey := make([]byte, 64)
@@ -73,19 +79,65 @@ func NewFrontend(config *nebula.Config, logger *logrus.Logger, store *store.Stor
 		},
 	}
 
-	return &frontend{cookieStore, oauth2Config, store, config, logger}, nil
+	return &frontend{cookieStore, oauth2Config, store, ipManager, config, logger}, nil
 }
 
 func (f *frontend) ServeHTTP() http.Handler {
 
 	router := mux.NewRouter()
+	router.Use(f.sessionMiddleware())
 	router.HandleFunc("/login", f.login)
 	router.HandleFunc("/oauth2", f.authorize)
-	router.PathPrefix("/").HandlerFunc(f.webapp)
+
+	graphqlSrv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: graph.NewResolver(f.store, f.ipManager, f.l)}))
+
+	router.Handle("/graphql", graphqlSrv)
+
+	w := webapp.WebHandler(f.l)
+	router.PathPrefix("/").HandlerFunc(w)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		router.ServeHTTP(w, r)
 	})
+}
+
+func (f *frontend) sessionMiddleware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if strings.HasPrefix(r.URL.Path, "/oauth2") {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			session, _ := f.sessions.Get(r, CookieName)
+
+			if strings.HasPrefix(r.URL.Path, "/graphql") {
+				if v, ok := session.Values["loggedIn"]; !ok && v != "true" {
+					w.WriteHeader(401)
+					return
+				}
+			} else if f.authRedirect(w, r) {
+				return
+			}
+
+			id := session.Values["sub"].(string)
+			if id != "" {
+				user, err := f.store.GetUserByID(id)
+				if err == nil {
+					ctx := graph.WithUser(r.Context(), model.User{
+						ID:    user.Id,
+						Name:  user.Name,
+						Email: user.Email,
+					})
+					r = r.WithContext(ctx)
+				}
+			}
+
+			session.Save(r, w)
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 func (f *frontend) authRedirect(w http.ResponseWriter, r *http.Request) bool {
@@ -176,24 +228,8 @@ func (f *frontend) authorize(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
-func (f *frontend) login(w http.ResponseWriter, r *http.Request) {
-	if f.authRedirect(w, r) {
-		return
-	}
-
+func (f *frontend) login(w http.ResponseWriter, _ *http.Request) {
 	w.Write([]byte("You are already logged in!"))
-}
-
-func (f *frontend) webapp(w http.ResponseWriter, r *http.Request) {
-	if f.authRedirect(w, r) {
-		return
-	}
-
-	wa, err := fs.Sub(webapp.Webapp, "dist")
-	if err != nil {
-		fmt.Println(err)
-	}
-	http.FileServer(http.FS(wa)).ServeHTTP(w, r)
 }
 
 func (f *frontend) getUserInfo(token *oauth2.Token) (*userInfo, error) {

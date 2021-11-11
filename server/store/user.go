@@ -41,7 +41,7 @@ func (s *Store) IsUserApproved(id string) (*User, bool) {
 		return user, false
 	}
 
-	if user.Approve != nil && user.Approve.Approved {
+	if user.Approve != nil && user.Approve.Approved && !user.Disabled {
 		return user, true
 	}
 
@@ -80,6 +80,36 @@ func (s *Store) ListUsersWaitingForApproval() ([]*User, error) {
 	return users, nil
 }
 
+func (s *Store) ListUsers() ([]*User, error) {
+	txn := s.db.NewTransaction(false)
+	defer txn.Discard()
+
+	opts := badger.DefaultIteratorOptions
+	opts.PrefetchSize = 10
+	opts.Prefix = prefix_user
+	it := txn.NewIterator(opts)
+	defer it.Close()
+
+	var users []*User
+
+	for it.Seek(prefix_user); it.ValidForPrefix(prefix_user); it.Next() {
+		item := it.Item()
+		err := item.Value(func(v []byte) error {
+			u := &User{}
+			if err := proto.Unmarshal(v, u); err != nil {
+				s.l.WithError(err).Error("Failed to parse user")
+			}
+			users = append(users, u)
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return users, nil
+}
+
 func (s *Store) ApproveUserAccess(userId string, approve *UserApprove) (*User, error) {
 	txn := s.db.NewTransaction(true)
 	defer txn.Discard()
@@ -90,9 +120,25 @@ func (s *Store) ApproveUserAccess(userId string, approve *UserApprove) (*User, e
 	}
 	err = txn.Commit()
 	if err != nil {
-		return nil, fmt.Errorf("failed to add user: %s", err)
+		return nil, fmt.Errorf("failed to approve user: %s", err)
 	}
 	s.l.Infof("User is approved: %s %s", user.Id, user.Email)
+	return user, nil
+}
+
+func (s *Store) DisableUserAccess(userId string) (*User, error) {
+	txn := s.db.NewTransaction(true)
+	defer txn.Discard()
+
+	user, err := s.disableUserAccess(txn, userId)
+	if err != nil {
+		return nil, err
+	}
+	err = txn.Commit()
+	if err != nil {
+		return nil, fmt.Errorf("failed to disable user: %s", err)
+	}
+	s.l.Infof("User is disabled: %s %s", user.Id, user.Email)
 	return user, nil
 }
 
@@ -163,12 +209,43 @@ func (s *Store) approveUserAccess(txn *badger.Txn, id string, approve *UserAppro
 		return nil, err
 	}
 
-	if user.Approve != nil && user.Approve.Approved {
+	if user.Approve != nil && user.Approve.Approved && !user.Disabled {
 		return nil, fmt.Errorf("user is already approved")
 	}
 
+	user.Disabled = false
 	user.Approve = approve
 	user.Approve.ApprovedAt = timestamppb.Now()
+
+	bytes, err := proto.Marshal(user)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal user: %s", err)
+	}
+
+	err = txn.Set(append(prefix_user, user.Id...), bytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save user: %s", err)
+	}
+
+	return user, nil
+}
+
+func (s *Store) disableUserAccess(txn *badger.Txn, id string) (*User, error) {
+
+	if !exists(txn, prefix_user, []byte(id)) {
+		return nil, fmt.Errorf("user don't exists")
+	}
+
+	user, err := s.GetUserByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if user.Disabled {
+		return nil, fmt.Errorf("user is already disabled")
+	}
+
+	user.Disabled = true
 
 	bytes, err := proto.Marshal(user)
 	if err != nil {

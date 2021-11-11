@@ -45,6 +45,18 @@ func (s *Store) ListNetworks() ([]*protocol.Network, error) {
 	return networks, nil
 }
 
+func (s *Store) GetNetworkByName(name string) (*protocol.Network, error) {
+	txn := s.db.NewTransaction(false)
+	defer txn.Discard()
+
+	n, err := s.getNetwork(txn, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return n, nil
+}
+
 func (s *Store) getNetwork(txn *badger.Txn, name string) (*protocol.Network, error) {
 	name = strings.ToLower(name)
 

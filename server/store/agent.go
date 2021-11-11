@@ -43,6 +43,13 @@ func (s *Store) IsAgentEnrolled(clientFingerprint []byte) bool {
 	return s.isAgentEnrolled(txn, clientFingerprint)
 }
 
+func (s *Store) ListAgentByNetwork(networkName string) ([]*Agent, error) {
+	txn := s.db.NewTransaction(false)
+	defer txn.Discard()
+
+	return s.listAgentByNetwork(txn, networkName)
+}
+
 func (s *Store) isAgentEnrolled(txn *badger.Txn, clientFingerprint []byte) bool {
 	return exists(txn, prefix_agent, clientFingerprint)
 }

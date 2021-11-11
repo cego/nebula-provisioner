@@ -1,1 +1,23 @@
 /* You can add global styles to this file, and also import other style files */
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+.content-elm {
+  padding: 1em;
+  margin-bottom: 1em;
+}
+
+.snack-bar {
+  max-width: 80% !important;
+}
+
+.snack-bar-danger {
+  background-color: darkred;
+}

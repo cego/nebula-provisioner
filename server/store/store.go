@@ -178,10 +178,10 @@ func exists(txn *badger.Txn, prefix, key []byte) bool {
 	opt := badger.DefaultIteratorOptions
 	opt.PrefetchValues = false
 	k := append(prefix, key...)
-	it := txn.NewKeyIterator(k, opt)
+	it := txn.NewIterator(opt)
 	defer it.Close()
 
-	for it.Rewind(); it.Valid(); it.Next() {
+	for it.Seek(k); it.ValidForPrefix(k); it.Next() {
 		if bytes.Equal(it.Item().Key(), k) {
 			return true
 		}

@@ -123,7 +123,7 @@ func (s *server) startHttpsServer(dataDir string) error {
 	server := grpc.NewServer()
 	protocol.RegisterAgentServiceServer(server, svc)
 
-	frontend, err := NewFrontend(s.config, s.l, s.store)
+	frontend, err := NewFrontend(s.config, s.l, s.store, s.ipManager)
 	if err != nil {
 		return err
 	}

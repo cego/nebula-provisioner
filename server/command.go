@@ -223,7 +223,7 @@ func (c *commandServer) ApproveEnrollmentRequest(_ context.Context, req *protoco
 		return nil, status.Error(codes.InvalidArgument, "ClientFingerprint is invalid")
 	}
 
-	err = c.store.ApproveEnrollmentRequest(c.ipManager, bytes)
+	_, err = c.store.ApproveEnrollmentRequest(c.ipManager, bytes)
 	if err != nil {
 		c.l.WithError(err).Error("Failed to approve enrollment request")
 		return nil, status.Error(codes.Internal, "Failed to approve enrollment request")
