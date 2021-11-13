@@ -20,7 +20,7 @@ jobs:
 
       - name: Build
         run: |
-          make BUILD_NUMBER="${GITHUB_REF#refs/tags/v}" release-linux
+          make -B BUILD_NUMBER="${GITHUB_REF#refs/tags/v}" release-linux
           mkdir release
           mv build/*.tar.gz release
 
