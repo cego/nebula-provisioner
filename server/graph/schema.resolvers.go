@@ -53,7 +53,7 @@ func (r *mutationResolver) ApproveEnrollmentRequest(_ context.Context, clientFin
 
 	agent, err := r.store.ApproveEnrollmentRequest(r.ipManager, bytes)
 	if err != nil {
-		r.l.WithError(err).Error("Failed to approve enrollment request: %s", clientFingerprint)
+		r.l.WithError(err).Errorf("Failed to approve enrollment request: %s", clientFingerprint)
 		return nil, gqlerror.Errorf("Failed to approve enrollment request: %s", clientFingerprint)
 	}
 

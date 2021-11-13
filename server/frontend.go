@@ -255,7 +255,7 @@ func (f *frontend) getUserInfo(token *oauth2.Token) (*userInfo, error) {
 				return &userInfo{j["sub"].(string), j["name"].(string), j["email"].(string)}, nil
 			}
 		} else {
-			return nil, fmt.Errorf("failed to get user info with status : %s", resp.StatusCode)
+			return nil, fmt.Errorf("failed to get user info with status : %d", resp.StatusCode)
 		}
 	}
 }
