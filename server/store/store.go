@@ -177,11 +177,14 @@ func appendIfMissing(slice [][]byte, b []byte) [][]byte {
 func exists(txn *badger.Txn, prefix, key []byte) bool {
 	opt := badger.DefaultIteratorOptions
 	opt.PrefetchValues = false
-	it := txn.NewKeyIterator(append(prefix, key...), opt)
+	k := append(prefix, key...)
+	it := txn.NewIterator(opt)
 	defer it.Close()
 
-	for it.Rewind(); it.Valid(); it.Next() {
-		return true
+	for it.Seek(k); it.ValidForPrefix(k); it.Next() {
+		if bytes.Equal(it.Item().Key(), k) {
+			return true
+		}
 	}
 	return false
 }

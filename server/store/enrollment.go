@@ -209,28 +209,77 @@ func (s *Store) ListEnrollmentRequests() ([]*EnrollmentRequest, error) {
 	return requests, nil
 }
 
-func (s *Store) ApproveEnrollmentRequest(ipManager *IPManager, clientFingerprint []byte) error {
+func (s *Store) ListEnrollmentRequestsByNetwork(networkName string) ([]*EnrollmentRequest, error) {
+	txn := s.db.NewTransaction(false)
+	defer txn.Discard()
+
+	opts := badger.DefaultIteratorOptions
+	opts.PrefetchSize = 10
+	opts.Prefix = prefix_enrollment_req
+	it := txn.NewIterator(opts)
+	defer it.Close()
+
+	var requests []*EnrollmentRequest
+
+	for it.Seek(prefix_enrollment_req); it.ValidForPrefix(prefix_enrollment_req); it.Next() {
+		item := it.Item()
+		err := item.Value(func(v []byte) error {
+			n := &EnrollmentRequest{}
+			if err := proto.Unmarshal(v, n); err != nil {
+				s.l.WithError(err).Error("Failed to parse enrollment request")
+			}
+			if n.NetworkName == networkName {
+				requests = append(requests, n)
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return requests, nil
+}
+
+func (s *Store) ApproveEnrollmentRequest(ipManager *IPManager, clientFingerprint []byte) (*Agent, error) {
 	txn := s.db.NewTransaction(true)
 	defer txn.Discard()
 
-	err := s.approveEnrollmentRequest(txn, ipManager, clientFingerprint)
+	agent, err := s.approveEnrollmentRequest(txn, ipManager, clientFingerprint)
 	if err != nil {
-		return fmt.Errorf("failed to approve enrollment token: %s", err)
+		return nil, fmt.Errorf("failed to approve enrollment request: %s", err)
 	}
 
 	err = txn.Commit()
 	if err != nil {
-		return fmt.Errorf("failed to approve enrollment token: %s", err)
+		return nil, fmt.Errorf("failed to approve enrollment request: %s", err)
+	}
+
+	return agent, nil
+}
+
+func (s *Store) DeleteEnrollmentRequest(clientFingerprint []byte) error {
+	txn := s.db.NewTransaction(true)
+	defer txn.Discard()
+
+	err := s.deleteEnrollmentRequest(txn, clientFingerprint)
+	if err != nil {
+		return fmt.Errorf("failed to delete enrollment request: %s", err)
+	}
+
+	err = txn.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to delete enrollment request: %s", err)
 	}
 
 	return nil
 }
 
-func (s *Store) approveEnrollmentRequest(txn *badger.Txn, ipManager *IPManager, clientFingerprint []byte) error {
+func (s *Store) approveEnrollmentRequest(txn *badger.Txn, ipManager *IPManager, clientFingerprint []byte) (*Agent, error) {
 
 	er, err := s.getEnrollmentRequest(txn, clientFingerprint)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	agent := &Agent{
@@ -238,38 +287,39 @@ func (s *Store) approveEnrollmentRequest(txn *badger.Txn, ipManager *IPManager, 
 		NetworkName:       er.NetworkName,
 		CsrPEM:            er.CsrPEM,
 		Groups:            er.Groups,
+		Name:              er.Name,
 	}
 
 	ip := ipManager.Next(er.NetworkName)
 	if ip == nil {
-		return fmt.Errorf("failed to get ip for agent")
+		return nil, fmt.Errorf("failed to get ip for agent")
 	}
 
 	agent, err = s.signCSR(txn, agent, ip)
 	if err != nil {
-		return fmt.Errorf("failed to sign agent csr: %s", err)
+		return nil, fmt.Errorf("failed to sign agent csr: %s", err)
 	}
 
 	agent, err = s.addAgent(txn, agent)
 	if err != nil {
-		return fmt.Errorf("failed to add agent as part of approving: %s", err)
+		return nil, fmt.Errorf("failed to add agent as part of approving: %s", err)
 	}
 
 	if err = s.deleteEnrollmentRequest(txn, clientFingerprint); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return agent, nil
 }
 
 func (s *Store) getEnrollmentRequest(txn *badger.Txn, clientFingerprint []byte) (*EnrollmentRequest, error) {
 	if !exists(txn, prefix_enrollment_req, clientFingerprint) {
-		return nil, fmt.Errorf("enrollement token was not found: %s", clientFingerprint)
+		return nil, fmt.Errorf("enrollment request was not found: %s", clientFingerprint)
 	}
 
 	t, err := txn.Get(append(prefix_enrollment_req, clientFingerprint...))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get enrollment token: %s", err)
+		return nil, fmt.Errorf("failed to get enrollment request: %s", err)
 	}
 
 	er := &EnrollmentRequest{}
@@ -286,12 +336,12 @@ func (s *Store) getEnrollmentRequest(txn *badger.Txn, clientFingerprint []byte) 
 
 func (s *Store) deleteEnrollmentRequest(txn *badger.Txn, clientFingerprint []byte) error {
 	if !exists(txn, prefix_enrollment_req, clientFingerprint) {
-		return fmt.Errorf("enrollement token was not found: %s", clientFingerprint)
+		return fmt.Errorf("enrollment request was not found: %x", clientFingerprint)
 	}
 
 	err := txn.Delete(append(prefix_enrollment_req, clientFingerprint...))
 	if err != nil {
-		return fmt.Errorf("failed to remove enrollment token: %s", err)
+		return fmt.Errorf("failed to remove enrollment request: %s", err)
 	}
 	return nil
 }

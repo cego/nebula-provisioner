@@ -7,11 +7,23 @@
 #listen:
 #  https: ":https"
 #  http: ":http"
+#url: https://nebula-provisioner.example.com/
 
 #acme:
 #  enabled: true
-  # DNS names the server response on
-  #hosts:
-  #  - nebula-provisioner.example.com
+#  # DNS names the server response on
+#  #hosts:
+#  #  - nebula-provisioner.example.com
 
 #db.encrypted: true # Only supported to disable when not a release
+
+#oauth2:
+#  clientId: ""
+#  clientSecret: ""
+#  scopes:
+#    - openid
+#    - profile
+#    - email
+#  authUrl: ""
+#  tokenUrl: ""
+#  userInfoUrl: ""

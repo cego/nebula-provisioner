@@ -4,7 +4,6 @@ CMD_PATH = "./cmd/"
 
 # Set up OS specific bits
 ifeq ($(OS),Windows_NT)
-	#TODO: we should be able to ditch awk as well
 	GOVERSION := $(shell go version | awk "{print substr($$3, 3)}")
 	GOISMIN := $(shell IF "$(GOVERSION)" GEQ "$(GOMINVERSION)" ECHO 1)
 	CMD_SUFFIX = .exe
@@ -21,7 +20,7 @@ ALL_LINUX = linux-amd64 \
 
 ALL = $(ALL_LINUX)
 
-all: $(ALL:%=build/%/server) $(ALL:%=build/%/server-client) $(ALL:%=build/%/agent)
+all: webapp $(ALL:%=build/%/server) $(ALL:%=build/%/server-client) $(ALL:%=build/%/agent)
 
 release: $(ALL:%=build/nebula-provisioner-%.tar.gz)
 
@@ -45,10 +44,14 @@ build/%/agent: .FORCE
 build/nebula-provisioner-%.tar.gz: build/%/server build/%/server-client build/%/agent
 	tar -zcv -C build/$* -f $@ server server-client agent
 
-bin: protocol server/store/store.pb.go
-	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/server${CMD_SUFFIX} ${CMD_PATH}/server
-	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/server-client${CMD_SUFFIX} ${CMD_PATH}/server-client
-	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" -o ./bin/agent${CMD_SUFFIX} ${CMD_PATH}/agent
+bin: protocol server/store/store.pb.go server/graph/generated/generated.go
+	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" $(BUILD_TAGS) -o ./bin/server${CMD_SUFFIX} ${CMD_PATH}/server
+	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" $(BUILD_TAGS) -o ./bin/server-client${CMD_SUFFIX} ${CMD_PATH}/server-client
+	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" $(BUILD_TAGS) -o ./bin/agent${CMD_SUFFIX} ${CMD_PATH}/agent
+
+dev: BUILD_TAGS=-tags dev
+dev: LDFLAGS=-X github.com/slyngdk/nebula-provisioner/webapp.Dir=$(CURDIR)/webapp/
+dev: bin
 
 protocol: protocol/models.pb.go protocol/agent-service.pb.go protocol/server-command.pb.go
 
@@ -75,6 +78,22 @@ vet:
 test:
 	go test -v ./...
 
+impsort:
+	go get golang.org/x/tools/cmd/goimports
+	go build golang.org/x/tools/cmd/goimports
+	find . -iname '*.go' | grep -v '\.pb\.go$$' | xargs ./goimports -w
+	rm -f ./goimports
+
+WEBAPP_DIRS = $(shell find ./webapp/ -type d  | grep -vE 'webapp/(node_modules|dist)')
+WEBAPP_FILES = $(shell find ./webapp/ -type f -name '*' | grep -vE 'webapp/(node_modules|dist)')
+
+webapp: ./webapp/ $(WEBAPP_DIRS) $(WEBAPP_FILES)
+	$(MAKE) -C webapp build
+
+server/graph/generated/generated.go: server/graph/schema.graphqls gqlgen.yml
+	go get github.com/99designs/gqlgen/cmd@v0.14.0
+	go run github.com/99designs/gqlgen generate
+
 .FORCE:
-.PHONY: test bin protocol
+.PHONY: test bin protocol dev
 .DEFAULT_GOAL := bin

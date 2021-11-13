@@ -41,9 +41,26 @@ message Agent {
   string signedPEM = 10;
   google.protobuf.Timestamp issuedAt = 11;
   google.protobuf.Timestamp expiresAt = 12;
+  string name = 13;
 }
 
 message IPRange {
   bytes network = 1;
   bytes netmask = 2;
+}
+
+message User {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  google.protobuf.Timestamp created = 4;
+
+  UserApprove approve = 10;
+  bool disabled = 11;
+}
+
+message UserApprove {
+  bool approved = 1;
+  string approvedBy = 2;
+  google.protobuf.Timestamp approvedAt = 3;
 }

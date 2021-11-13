@@ -7,4 +7,5 @@ var (
 	prefix_enrollment_req   = []byte("enre|")
 	prefix_network          = []byte("netw|")
 	prefix_ip_range         = []byte("ipra|")
+	prefix_user             = []byte("user|")
 )

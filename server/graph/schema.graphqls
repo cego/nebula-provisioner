@@ -1,0 +1,60 @@
+type Agent {
+    clientFingerprint: String!
+    created: String!
+    networkName: String!
+    groups: [String]
+    assignedIP: String
+    issuedAt: String
+    expiresAt: String
+    name: String
+}
+
+type EnrollmentRequest {
+    clientFingerprint: String!
+    created: String!
+    networkName: String!
+    clientIP: String
+    name: String
+}
+
+type Network {
+    name: String!
+    duration: String
+    groups:   [String]
+    ips:      [String]
+    subnets:  [String]
+    ipPools: [String]
+    agents: [Agent]
+    enrollmentToken: String
+    enrollmentRequests: [EnrollmentRequest]
+}
+
+type User {
+    id: ID!
+    name: String!
+    email: String!
+
+    userApprove: UserApprove
+    disabled: Boolean!
+}
+
+type UserApprove {
+    approved: Boolean!
+    approvedBy: String!
+    approvedByUser: User
+    approvedAt: String!
+}
+
+type Query {
+    currentUser: User!
+    getUsers: [User]!
+    getNetworks: [Network]!
+    getNetwork(name: String!): Network!
+}
+
+type Mutation {
+    approveUser(userId: String!): User
+    disableUser(userId: String!): User
+    approveEnrollmentRequest(clientFingerprint: String!): Agent
+    deleteEnrollmentRequest(clientFingerprint: String!): Boolean
+}
