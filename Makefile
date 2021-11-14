@@ -1,7 +1,7 @@
 BUILD_ARGS = -trimpath
 LDFLAGS = -X main.Build=$(BUILD_NUMBER)
 CMD_PATH = "./cmd/"
-
+GQLGEN_VERSION = v0.14.0
 # Set up OS specific bits
 ifeq ($(OS),Windows_NT)
 	GOVERSION := $(shell go version | awk "{print substr($$3, 3)}")
@@ -20,13 +20,13 @@ ALL_LINUX = linux-amd64 \
 
 ALL = $(ALL_LINUX)
 
-all: webapp $(ALL:%=build/%/server) $(ALL:%=build/%/server-client) $(ALL:%=build/%/agent)
+all: $(ALL:%=build/%/server) $(ALL:%=build/%/server-client) $(ALL:%=build/%/agent)
 
 release: $(ALL:%=build/nebula-provisioner-%.tar.gz)
 
 release-linux: $(ALL_LINUX:%=build/nebula-provisioner-%.tar.gz)
 
-build/%/server: .FORCE
+build/%/server: webapp .FORCE
 	GOOS=$(firstword $(subst -, , $*)) \
     		GOARCH=$(word 2, $(subst -, ,$*)) $(GOENV) \
 			go build $(BUILD_ARGS) -o $@ -ldflags "$(LDFLAGS)" ${CMD_PATH}/server
@@ -44,7 +44,7 @@ build/%/agent: .FORCE
 build/nebula-provisioner-%.tar.gz: build/%/server build/%/server-client build/%/agent
 	tar -zcv -C build/$* -f $@ server server-client agent
 
-bin: protocol server/store/store.pb.go server/graph/generated/generated.go
+bin: protocol server/store/store.pb.go server/graph/generated/generated.go webapp
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" $(BUILD_TAGS) -o ./bin/server${CMD_SUFFIX} ${CMD_PATH}/server
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" $(BUILD_TAGS) -o ./bin/server-client${CMD_SUFFIX} ${CMD_PATH}/server-client
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" $(BUILD_TAGS) -o ./bin/agent${CMD_SUFFIX} ${CMD_PATH}/agent
@@ -65,7 +65,7 @@ protocol/server-command.pb.go: protocol/server-command.proto
 	$(MAKE) -C protocol server-command.pb.go
 
 server/store/store.pb.go: server/store/store.proto
-	go build google.golang.org/protobuf/cmd/protoc-gen-go
+	GOBIN="$(CURDIR)" go install google.golang.org/protobuf/cmd/protoc-gen-go
 	PATH="$(CURDIR):$(PATH)" protoc --go_out=. --go_opt=paths=source_relative $<
 	rm protoc-gen-go
 
@@ -91,7 +91,7 @@ webapp: ./webapp/ $(WEBAPP_DIRS) $(WEBAPP_FILES)
 	$(MAKE) -C webapp build
 
 server/graph/generated/generated.go: server/graph/schema.graphqls gqlgen.yml
-	go get github.com/99designs/gqlgen/cmd@v0.14.0
+	go get github.com/99designs/gqlgen/cmd@$(GQLGEN_VERSION)
 	go run github.com/99designs/gqlgen generate
 
 .FORCE:
