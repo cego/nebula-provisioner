@@ -1,5 +1,7 @@
+import {gql} from "apollo-angular";
+
 export interface Agent {
-    clientFingerprint?: string;
+    fingerprint?: string;
     created?: string;
     networkName: string;
     groups: string[];
@@ -8,3 +10,13 @@ export interface Agent {
     expiresAt: string;
     name: string;
 }
+
+export const GET_AGENT_BY_CLIENT_FINGERPRINT = gql`query GetAgent($fingerprint: String!){
+    getAgent(fingerprint: $fingerprint){
+        created
+        fingerprint
+        assignedIP
+        groups
+        name
+    }
+}`;

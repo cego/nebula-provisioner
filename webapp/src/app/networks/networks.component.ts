@@ -23,19 +23,22 @@ import {Router} from "@angular/router";
 
             <table mat-table [dataSource]="data">
 
-                <!-- Name Column -->
                 <ng-container matColumnDef="name">
                     <th mat-header-cell *matHeaderCellDef> Name</th>
                     <td mat-cell *matCellDef="let item"> {{item.name}} </td>
                 </ng-container>
-                <!-- IP pools Column -->
+                <ng-container matColumnDef="ips">
+                    <th mat-header-cell *matHeaderCellDef> IP's</th>
+                    <td mat-cell *matCellDef="let item"> {{item.ips}} </td>
+                </ng-container>
                 <ng-container matColumnDef="ipPools">
                     <th mat-header-cell *matHeaderCellDef> IP Pools</th>
                     <td mat-cell *matCellDef="let item"> {{item.ipPools}} </td>
                 </ng-container>
 
                 <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="openNetwork(row)"></tr>
+                <tr mat-row class="mat-row-selectable" *matRowDef="let row; columns: displayedColumns;"
+                    (click)="openNetwork(row)"></tr>
             </table>
         </div>
     `,
@@ -52,7 +55,7 @@ import {Router} from "@angular/router";
 })
 export class NetworksComponent implements OnInit, OnDestroy {
     private subs = new SubSink();
-    displayedColumns: string[] = ['name', 'ipPools'];
+    displayedColumns: string[] = ['name', 'ips', 'ipPools'];
     data: Network[] = [];
 
     isLoadingResults = false;
@@ -68,6 +71,7 @@ export class NetworksComponent implements OnInit, OnDestroy {
                 {
                     getNetworks {
                         name
+                        ips
                         ipPools
                     }
                 }`,

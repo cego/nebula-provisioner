@@ -16,6 +16,10 @@ import {AlertService} from "../alert/alert.service";
             <table>
                 <tbody>
                 <tr>
+                    <td>IP's:</td>
+                    <td>{{network?.ips}}</td>
+                </tr>
+                <tr>
                     <td>IP Pools:</td>
                     <td>{{network?.ipPools}}</td>
                 </tr>
@@ -26,10 +30,6 @@ import {AlertService} from "../alert/alert.service";
                 <tr>
                     <td>Groups:</td>
                     <td>{{network?.groups}}</td>
-                </tr>
-                <tr>
-                    <td>IP's:</td>
-                    <td>{{network?.ips}}</td>
                 </tr>
                 <tr>
                     <td>Subnets:</td>

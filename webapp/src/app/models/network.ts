@@ -14,11 +14,13 @@ export interface Network {
 }
 
 export interface EnrollmentRequest {
-    clientFingerprint?: string
-    created?: string
-    networkName?: string
-    clientIP?: string
-    name?: string
+    fingerprint?: string;
+    created?: string;
+    networkName?: string;
+    clientIP?: string;
+    name?: string;
+    requestedIP: string;
+    groups?: string[];
 }
 
 export const GET_NETWORK_BY_NAME = gql`query GetNetwork($name: String!){
@@ -30,15 +32,17 @@ export const GET_NETWORK_BY_NAME = gql`query GetNetwork($name: String!){
         subnets
         enrollmentToken
         enrollmentRequests {
-            clientFingerprint
+            fingerprint
             clientIP
             created
             name
             networkName
+            requestedIP
+            groups
         }
         agents {
             created
-            clientFingerprint
+            fingerprint
             assignedIP
             groups
             name

@@ -29,8 +29,7 @@ func init() {
 type IPPool struct {
 	l *logrus.Logger
 
-	cidr     *net.IPNet
-	ipsInUse []net.IP
+	cidr *net.IPNet
 
 	db   *badger.DB
 	lock sync.Mutex
@@ -46,7 +45,7 @@ func inc(ip net.IP) {
 	}
 }
 
-func (i *IPPool) Next() *net.IPNet {
+func (i *IPPool) Next(ipsInUse []net.IP) *net.IPNet {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 
@@ -54,12 +53,9 @@ func (i *IPPool) Next() *net.IPNet {
 	broadcastIP := broadcastIP(i.cidr)
 
 	for ip := i.cidr.IP.Mask(i.cidr.Mask); i.cidr.Contains(ip); inc(ip) {
-		if ip.Equal(networkIP) || ip.Equal(broadcastIP) || containsIP(i.ipsInUse, ip) {
+		if ip.Equal(networkIP) || ip.Equal(broadcastIP) || containsIP(ipsInUse, ip) {
 			continue
 		}
-
-		i.ipsInUse = append(i.ipsInUse, ip)
-
 		return &net.IPNet{IP: ip, Mask: i.cidr.Mask}
 	}
 	return nil
@@ -151,26 +147,6 @@ func (s *Store) NewIPPool(networkName string, cidr *net.IPNet) (*IPPool, error) 
 		if err != nil {
 			return nil, fmt.Errorf("failed to create IP Range: %s %s", cidr.IP.String(), err)
 		}
-	} else {
-		s.l.Infof("Finding used IPs for pool : %s on network : %s", cidr.IP, networkName)
-		agentsByNet, err := s.listAgentByNetwork(txn, networkName)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load IP Range: %s %s", cidr.IP.String(), err)
-		}
-
-		var usedIps []net.IP
-
-		for _, agent := range agentsByNet {
-
-			if len(agent.AssignedIP) > 0 {
-				ip := net.ParseIP(agent.AssignedIP)
-				if ip != nil && i.cidr.Contains(ip) {
-					usedIps = append(usedIps, ip)
-				}
-			}
-		}
-
-		i.ipsInUse = usedIps
 	}
 
 	err := txn.Commit()

@@ -88,6 +88,7 @@ func (f *frontend) ServeHTTP() http.Handler {
 	router.Use(f.sessionMiddleware())
 	router.HandleFunc("/login", f.login)
 	router.HandleFunc("/oauth2", f.authorize)
+	router.HandleFunc("/oauth2/access-denied", f.accessDenied)
 
 	graphqlSrv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: graph.NewResolver(f.store, f.ipManager, f.l)}))
 
@@ -111,12 +112,20 @@ func (f *frontend) sessionMiddleware() func(http.Handler) http.Handler {
 
 			session, _ := f.sessions.Get(r, CookieName)
 
+			if v, _ := session.Values["loggedIn"]; v != "true" {
+				if session.Values["sub"] != nil && session.Values["sub"] != "" {
+					if _, ok := f.store.IsUserApproved(session.Values["sub"].(string)); ok {
+						session.Values["loggedIn"] = "true"
+					}
+				}
+			}
+
 			if strings.HasPrefix(r.URL.Path, "/graphql") {
 				if v, ok := session.Values["loggedIn"]; !ok && v != "true" {
 					w.WriteHeader(401)
 					return
 				}
-			} else if f.authRedirect(w, r) {
+			} else if f.authRedirect(w, r, session) {
 				return
 			}
 
@@ -140,8 +149,7 @@ func (f *frontend) sessionMiddleware() func(http.Handler) http.Handler {
 	}
 }
 
-func (f *frontend) authRedirect(w http.ResponseWriter, r *http.Request) bool {
-	session, _ := f.sessions.Get(r, CookieName)
+func (f *frontend) authRedirect(w http.ResponseWriter, r *http.Request, session *sessions.Session) bool {
 	if v, ok := session.Values["loggedIn"]; ok && v == "true" {
 		return false
 	}
@@ -203,6 +211,10 @@ func (f *frontend) authorize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	session.Values["sub"] = u.sub
+	session.Values["name"] = u.name
+	session.Values["email"] = u.email
+
 	if user, ok := f.store.IsUserApproved(u.sub); !ok {
 		if user == nil {
 			_, err = f.store.AddUser(&store.User{Id: u.sub, Name: u.name, Email: u.email})
@@ -210,14 +222,14 @@ func (f *frontend) authorize(w http.ResponseWriter, r *http.Request) {
 				f.l.WithError(err).Error("Failed to add user")
 			}
 		}
-		http.Error(w, "Your are not allowed to login", http.StatusInternalServerError)
+
+		session.Values["loggedIn"] = "false"
+		err = session.Save(r, w)
+		http.Redirect(w, r, "/oauth2/access-denied", 302)
 		return
 	}
 
-	session.Values["loggedIn"] = "true" // TODO better way to mark user is logged in
-	session.Values["sub"] = u.sub
-	session.Values["name"] = u.name
-	session.Values["email"] = u.email
+	session.Values["loggedIn"] = "true"
 
 	err = session.Save(r, w)
 	if err != nil {
@@ -230,6 +242,25 @@ func (f *frontend) authorize(w http.ResponseWriter, r *http.Request) {
 
 func (f *frontend) login(w http.ResponseWriter, _ *http.Request) {
 	w.Write([]byte("You are already logged in!"))
+}
+
+func (f *frontend) accessDenied(w http.ResponseWriter, r *http.Request) {
+	session, _ := f.sessions.Get(r, CookieName)
+
+	if session.Values["sub"] != nil && session.Values["sub"] != "" {
+		if _, ok := f.store.IsUserApproved(session.Values["sub"].(string)); ok {
+			session.Values["loggedIn"] = "true"
+			err := session.Save(r, w)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			http.Redirect(w, r, "/", 302)
+			return
+		}
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprint(w, "Your are not allowed to login <a href=\"/\">Retry</a>")
 }
 
 func (f *frontend) getUserInfo(token *oauth2.Token) (*userInfo, error) {

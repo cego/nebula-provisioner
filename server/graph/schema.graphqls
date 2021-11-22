@@ -1,5 +1,5 @@
 type Agent {
-    clientFingerprint: String!
+    fingerprint: String!
     created: String!
     networkName: String!
     groups: [String]
@@ -10,11 +10,13 @@ type Agent {
 }
 
 type EnrollmentRequest {
-    clientFingerprint: String!
+    fingerprint: String!
     created: String!
     networkName: String!
     clientIP: String
     name: String
+    requestedIP: String
+    groups: [String]
 }
 
 type Network {
@@ -50,11 +52,12 @@ type Query {
     getUsers: [User]!
     getNetworks: [Network]!
     getNetwork(name: String!): Network!
+    getAgent(fingerprint: String!): Agent
 }
 
 type Mutation {
     approveUser(userId: String!): User
     disableUser(userId: String!): User
-    approveEnrollmentRequest(clientFingerprint: String!): Agent
-    deleteEnrollmentRequest(clientFingerprint: String!): Boolean
+    approveEnrollmentRequest(fingerprint: String!): Agent
+    deleteEnrollmentRequest(fingerprint: String!): Boolean
 }

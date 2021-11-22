@@ -20,6 +20,7 @@ message EnrollRequest {
   string csrPEM = 2;
   repeated string groups = 3;
   string name = 4;
+  string requestedIP = 5;
 }
 
 message EnrollResponse {
