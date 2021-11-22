@@ -26,12 +26,11 @@ import {MatGridListModule} from "@angular/material/grid-list";
 import {MatDialogModule} from "@angular/material/dialog";
 import {NetworkComponent} from "./networks/network.component";
 import {NetworkAgentsComponent} from "./networks/network-agents.component";
-import {
-    EnrollmentRequestApproveDialog,
-    NetworkEnrollmentRequestsComponent
-} from "./networks/network-enrollment-requests.component";
+import {NetworkEnrollmentRequestsComponent} from "./networks/network-enrollment-requests.component";
 import {AlertsComponent} from "./alert/alerts.component";
 import {MAT_SNACK_BAR_DEFAULT_OPTIONS, MatSnackBarModule} from "@angular/material/snack-bar";
+import {EnrollmentRequestApproveDialog} from "./networks/enrollment-request-approve-dialog.component";
+import {CdkTableModule} from "@angular/cdk/table";
 
 @NgModule({
     declarations: [
@@ -68,7 +67,8 @@ import {MAT_SNACK_BAR_DEFAULT_OPTIONS, MatSnackBarModule} from "@angular/materia
         MatInputModule,
         MatGridListModule,
         MatDialogModule,
-        MatSnackBarModule
+        MatSnackBarModule,
+        CdkTableModule
     ],
     providers: [
         {provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: {duration: 2500}}

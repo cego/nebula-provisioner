@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -58,6 +59,12 @@ func (a *agentService) Enroll(ctx context.Context, request *protocol.EnrollReque
 	if request.CsrPEM == "" {
 		return nil, status.Error(codes.InvalidArgument, "CsrPEM is required")
 	}
+	if request.RequestedIP != "" {
+		ip := net.ParseIP(request.RequestedIP)
+		if ip == nil {
+			return nil, status.Error(codes.InvalidArgument, "RequestedIP is not valid")
+		}
+	}
 
 	_, _, err = cert.UnmarshalX25519PublicKey([]byte(request.CsrPEM))
 	if err != nil {
@@ -68,7 +75,7 @@ func (a *agentService) Enroll(ctx context.Context, request *protocol.EnrollReque
 	addr := p.Addr.String()
 	ip := addr[0:strings.LastIndex(addr, ":")]
 
-	_, err = a.store.CreateEnrollmentRequest(fingerprint, request.Token, request.CsrPEM, ip, request.Name)
+	_, err = a.store.CreateEnrollmentRequest(fingerprint, request.Token, request.CsrPEM, ip, request.Name, request.RequestedIP, request.Groups)
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("%s", err))
 	}

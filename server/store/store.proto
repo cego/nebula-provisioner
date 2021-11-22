@@ -28,6 +28,7 @@ message EnrollmentRequest {
   string clientIP = 6;
   repeated string groups = 7;
   string name = 8;
+  string requestedIP = 9;
 }
 
 message Agent {

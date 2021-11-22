@@ -28,7 +28,7 @@ func (r *mutationResolver) ApproveUser(ctx context.Context, userID string) (*mod
 	return userToModel(user), nil
 }
 
-func (r *mutationResolver) DisableUser(_ context.Context, userID string) (*model.User, error) {
+func (r *mutationResolver) DisableUser(ctx context.Context, userID string) (*model.User, error) {
 	if userID == "" {
 		return nil, gqlerror.Errorf("userId is required")
 	}
@@ -41,45 +41,45 @@ func (r *mutationResolver) DisableUser(_ context.Context, userID string) (*model
 	return userToModel(user), nil
 }
 
-func (r *mutationResolver) ApproveEnrollmentRequest(_ context.Context, clientFingerprint string) (*model.Agent, error) {
-	if clientFingerprint == "" {
-		return nil, gqlerror.Errorf("clientFingerprint is required")
+func (r *mutationResolver) ApproveEnrollmentRequest(ctx context.Context, fingerprint string) (*model.Agent, error) {
+	if fingerprint == "" {
+		return nil, gqlerror.Errorf("fingerprint is required")
 	}
 
-	bytes, err := hex.DecodeString(clientFingerprint)
+	bytes, err := hex.DecodeString(fingerprint)
 	if err != nil {
-		return nil, gqlerror.Errorf("failed to decode clientFingerprint: %s", clientFingerprint)
+		return nil, gqlerror.Errorf("failed to decode fingerprint: %s", fingerprint)
 	}
 
 	agent, err := r.store.ApproveEnrollmentRequest(r.ipManager, bytes)
 	if err != nil {
-		r.l.WithError(err).Errorf("Failed to approve enrollment request: %s", clientFingerprint)
-		return nil, gqlerror.Errorf("Failed to approve enrollment request: %s", clientFingerprint)
+		r.l.WithError(err).Errorf("Failed to approve enrollment request: %s", fingerprint)
+		return nil, gqlerror.Errorf("Failed to approve enrollment request: %s", fingerprint)
 	}
 
 	return agentToModel(agent), nil
 }
 
-func (r *mutationResolver) DeleteEnrollmentRequest(_ context.Context, clientFingerprint string) (*bool, error) {
-	if clientFingerprint == "" {
-		return nil, gqlerror.Errorf("clientFingerprint is required")
+func (r *mutationResolver) DeleteEnrollmentRequest(ctx context.Context, fingerprint string) (*bool, error) {
+	if fingerprint == "" {
+		return nil, gqlerror.Errorf("fingerprint is required")
 	}
 
-	bytes, err := hex.DecodeString(clientFingerprint)
+	bytes, err := hex.DecodeString(fingerprint)
 	if err != nil {
-		return nil, gqlerror.Errorf("failed to decode clientFingerprint: %s", clientFingerprint)
+		return nil, gqlerror.Errorf("failed to decode fingerprint: %s", fingerprint)
 	}
 
 	err = r.store.DeleteEnrollmentRequest(bytes)
 	if err != nil {
-		r.l.WithError(err).Errorf("failed to delete enrollment request: %s", clientFingerprint)
-		return nil, gqlerror.Errorf("failed to delete enrollment request: %s", clientFingerprint)
+		r.l.WithError(err).Errorf("failed to delete enrollment request: %s", fingerprint)
+		return nil, gqlerror.Errorf("failed to delete enrollment request: %s", fingerprint)
 	}
 
 	return nil, nil
 }
 
-func (r *networkResolver) Agents(_ context.Context, obj *model.Network) ([]*model.Agent, error) {
+func (r *networkResolver) Agents(ctx context.Context, obj *model.Network) ([]*model.Agent, error) {
 	if obj == nil {
 		return []*model.Agent{}, nil
 	}
@@ -97,7 +97,7 @@ func (r *networkResolver) Agents(_ context.Context, obj *model.Network) ([]*mode
 	return gAgent, nil
 }
 
-func (r *networkResolver) EnrollmentToken(_ context.Context, obj *model.Network) (*string, error) {
+func (r *networkResolver) EnrollmentToken(ctx context.Context, obj *model.Network) (*string, error) {
 	if obj == nil {
 		return nil, nil
 	}
@@ -111,7 +111,7 @@ func (r *networkResolver) EnrollmentToken(_ context.Context, obj *model.Network)
 	return &et.Token, nil
 }
 
-func (r *networkResolver) EnrollmentRequests(_ context.Context, obj *model.Network) ([]*model.EnrollmentRequest, error) {
+func (r *networkResolver) EnrollmentRequests(ctx context.Context, obj *model.Network) ([]*model.EnrollmentRequest, error) {
 	if obj == nil {
 		return []*model.EnrollmentRequest{}, nil
 	}
@@ -125,11 +125,15 @@ func (r *networkResolver) EnrollmentRequests(_ context.Context, obj *model.Netwo
 	gEnrollmentRequests := make([]*model.EnrollmentRequest, len(enrollmentRequests))
 	for i, a := range enrollmentRequests {
 		gEnrollmentRequests[i] = &model.EnrollmentRequest{
-			ClientFingerprint: hex.EncodeToString(a.ClientFingerprint),
-			Created:           a.Created.AsTime().Format(time.RFC3339),
-			NetworkName:       a.NetworkName,
-			ClientIP:          &a.ClientIP,
-			Name:              &a.Name,
+			Fingerprint: hex.EncodeToString(a.ClientFingerprint),
+			Created:     a.Created.AsTime().Format(time.RFC3339),
+			NetworkName: a.NetworkName,
+			ClientIP:    &a.ClientIP,
+			Name:        &a.Name,
+			Groups:      toPointerSliceString(a.Groups),
+		}
+		if a.RequestedIP != "" {
+			gEnrollmentRequests[i].RequestedIP = &a.RequestedIP
 		}
 	}
 	return gEnrollmentRequests, nil
@@ -141,7 +145,7 @@ func (r *queryResolver) CurrentUser(ctx context.Context) (*model.User, error) {
 	return &user, nil
 }
 
-func (r *queryResolver) GetUsers(_ context.Context) ([]*model.User, error) {
+func (r *queryResolver) GetUsers(ctx context.Context) ([]*model.User, error) {
 	users, err := r.store.ListUsers()
 	if err != nil {
 		r.l.WithError(err).Error("failed to get users")
@@ -157,7 +161,7 @@ func (r *queryResolver) GetUsers(_ context.Context) ([]*model.User, error) {
 	return gUsers, nil
 }
 
-func (r *queryResolver) GetNetworks(_ context.Context) ([]*model.Network, error) {
+func (r *queryResolver) GetNetworks(ctx context.Context) ([]*model.Network, error) {
 	networks, err := r.store.ListNetworks()
 	if err != nil {
 		r.l.WithError(err).Error("failed to get networks")
@@ -173,7 +177,7 @@ func (r *queryResolver) GetNetworks(_ context.Context) ([]*model.Network, error)
 	return gNetworks, nil
 }
 
-func (r *queryResolver) GetNetwork(_ context.Context, name string) (*model.Network, error) {
+func (r *queryResolver) GetNetwork(ctx context.Context, name string) (*model.Network, error) {
 	if name == "" {
 		return nil, gqlerror.Errorf("name is required")
 	}
@@ -187,7 +191,31 @@ func (r *queryResolver) GetNetwork(_ context.Context, name string) (*model.Netwo
 	return networkToModel(network), nil
 }
 
-func (r *userApproveResolver) ApprovedByUser(_ context.Context, obj *model.UserApprove) (*model.User, error) {
+func (r *queryResolver) GetAgent(ctx context.Context, fingerprint string) (*model.Agent, error) {
+	if fingerprint == "" {
+		return nil, gqlerror.Errorf("fingerprint is required")
+	}
+
+	bytes, err := hex.DecodeString(fingerprint)
+	if err != nil {
+		return nil, gqlerror.Errorf("failed to decode fingerprint: %s", fingerprint)
+	}
+
+	isAgentEnrolled := r.store.IsAgentEnrolled(bytes)
+	if !isAgentEnrolled {
+		return nil, nil
+	}
+
+	agent, err := r.store.GetAgentByFingerprint(bytes)
+	if err != nil {
+		r.l.WithError(err).Errorf("failed to get agent: %s", fingerprint)
+		return nil, gqlerror.Errorf("failed to get agent: %s", fingerprint)
+	}
+
+	return agentToModel(agent), nil
+}
+
+func (r *userApproveResolver) ApprovedByUser(ctx context.Context, obj *model.UserApprove) (*model.User, error) {
 	if obj == nil {
 		return nil, nil
 	}

@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/dgraph-io/badger/v3"
@@ -122,11 +123,11 @@ func (s *Store) getEnrollmentTokenByNetwork(txn *badger.Txn, network string) (*E
 	return nil, fmt.Errorf("no token found for: %s", network)
 }
 
-func (s *Store) CreateEnrollmentRequest(clientFingerprint []byte, token string, csrPEM string, clientIP string, name string) (*EnrollmentRequest, error) {
+func (s *Store) CreateEnrollmentRequest(clientFingerprint []byte, token, csrPEM, clientIP, name, requestedIP string, groups []string) (*EnrollmentRequest, error) {
 	txn := s.db.NewTransaction(true)
 	defer txn.Discard()
 
-	er, err := s.createEnrollmentRequest(txn, clientFingerprint, token, csrPEM, clientIP, name)
+	er, err := s.createEnrollmentRequest(txn, clientFingerprint, token, csrPEM, clientIP, name, requestedIP, groups)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +139,7 @@ func (s *Store) CreateEnrollmentRequest(clientFingerprint []byte, token string, 
 	return er, err
 }
 
-func (s *Store) createEnrollmentRequest(txn *badger.Txn, clientFingerprint []byte, token string, csrPEM string, clientIP string, name string) (*EnrollmentRequest, error) {
+func (s *Store) createEnrollmentRequest(txn *badger.Txn, clientFingerprint []byte, token, csrPEM, clientIP, name, requestedIP string, groups []string) (*EnrollmentRequest, error) {
 	if exists(txn, prefix_enrollment_req, clientFingerprint) {
 		return nil, fmt.Errorf("enrollement request already exists")
 	}
@@ -156,6 +157,11 @@ func (s *Store) createEnrollmentRequest(txn *badger.Txn, clientFingerprint []byt
 		CsrPEM:            csrPEM,
 		ClientIP:          clientIP,
 		Name:              name,
+		Groups:            groups,
+	}
+
+	if requestedIP != "" {
+		e.RequestedIP = requestedIP
 	}
 
 	bytes, err := proto.Marshal(e)
@@ -290,7 +296,21 @@ func (s *Store) approveEnrollmentRequest(txn *badger.Txn, ipManager *IPManager, 
 		Name:              er.Name,
 	}
 
-	ip := ipManager.Next(er.NetworkName)
+	var ip *net.IPNet
+
+	if er.RequestedIP != "" {
+		requestedIP := net.ParseIP(er.RequestedIP)
+		if requestedIP == nil {
+			return nil, fmt.Errorf("failed to parse requested IP: %s", er.RequestedIP)
+		}
+		ip, err = ipManager.RequestForAgent(er.NetworkName, clientFingerprint, requestedIP)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		ip = ipManager.Next(er.NetworkName)
+	}
+
 	if ip == nil {
 		return nil, fmt.Errorf("failed to get ip for agent")
 	}

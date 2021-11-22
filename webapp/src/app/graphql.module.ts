@@ -24,10 +24,10 @@ export function createApollo(httpLink: HttpLink): ApolloClientOptions<any> {
         cache: new InMemoryCache({
             typePolicies: {
                 Agent: {
-                    keyFields: ["clientFingerprint"]
+                    keyFields: ["fingerprint"]
                 },
                 EnrollmentRequest: {
-                    keyFields: ["clientFingerprint"]
+                    keyFields: ["fingerprint"]
                 },
                 Network: {
                     keyFields: ["name"]

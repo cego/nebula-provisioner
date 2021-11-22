@@ -14,6 +14,10 @@ import {Agent} from "../models/agent";
                 <th mat-header-cell *matHeaderCellDef> Name</th>
                 <td mat-cell *matCellDef="let agent"> {{agent.name}} </td>
             </ng-container>
+            <ng-container matColumnDef="groups">
+                <th mat-header-cell *matHeaderCellDef> Groups</th>
+                <td mat-cell *matCellDef="let agent"> {{agent.groups}} </td>
+            </ng-container>
             <ng-container matColumnDef="assignedIP">
                 <th mat-header-cell *matHeaderCellDef> Nebula IP</th>
                 <td mat-cell *matCellDef="let agent"> {{agent.assignedIP}} </td>
@@ -42,7 +46,7 @@ import {Agent} from "../models/agent";
     `],
 })
 export class NetworkAgentsComponent {
-    agentDisplayedColumns: string[] = ['created', 'name', 'assignedIP'];
+    agentDisplayedColumns: string[] = ['created', 'name', 'groups', 'assignedIP'];
     @Input() agents: Agent[] = [];
 
     constructor() {

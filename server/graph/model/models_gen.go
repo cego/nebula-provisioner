@@ -3,22 +3,24 @@
 package model
 
 type Agent struct {
-	ClientFingerprint string    `json:"clientFingerprint"`
-	Created           string    `json:"created"`
-	NetworkName       string    `json:"networkName"`
-	Groups            []*string `json:"groups"`
-	AssignedIP        *string   `json:"assignedIP"`
-	IssuedAt          *string   `json:"issuedAt"`
-	ExpiresAt         *string   `json:"expiresAt"`
-	Name              *string   `json:"name"`
+	Fingerprint string    `json:"fingerprint"`
+	Created     string    `json:"created"`
+	NetworkName string    `json:"networkName"`
+	Groups      []*string `json:"groups"`
+	AssignedIP  *string   `json:"assignedIP"`
+	IssuedAt    *string   `json:"issuedAt"`
+	ExpiresAt   *string   `json:"expiresAt"`
+	Name        *string   `json:"name"`
 }
 
 type EnrollmentRequest struct {
-	ClientFingerprint string  `json:"clientFingerprint"`
-	Created           string  `json:"created"`
-	NetworkName       string  `json:"networkName"`
-	ClientIP          *string `json:"clientIP"`
-	Name              *string `json:"name"`
+	Fingerprint string    `json:"fingerprint"`
+	Created     string    `json:"created"`
+	NetworkName string    `json:"networkName"`
+	ClientIP    *string   `json:"clientIP"`
+	Name        *string   `json:"name"`
+	RequestedIP *string   `json:"requestedIP"`
+	Groups      []*string `json:"groups"`
 }
 
 type Network struct {

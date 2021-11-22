@@ -1,10 +1,11 @@
-import {Component, Inject, Input, OnDestroy} from '@angular/core';
+import {Component, Input, OnDestroy} from '@angular/core';
 import {EnrollmentRequest, GET_NETWORK_BY_NAME} from "../models/network";
 import {ApolloResponse} from "../models/apollo";
 import {Apollo, gql} from "apollo-angular";
 import {SubSink} from "subsink";
-import {MAT_DIALOG_DATA, MatDialog} from "@angular/material/dialog";
+import {MatDialog} from "@angular/material/dialog";
 import {AlertService} from "../alert/alert.service";
+import {EnrollmentRequestApproveDialog} from "./enrollment-request-approve-dialog.component";
 
 @Component({
     selector: 'app-network-enrollment-requests',
@@ -22,6 +23,14 @@ import {AlertService} from "../alert/alert.service";
             <ng-container matColumnDef="clientIP">
                 <th mat-header-cell *matHeaderCellDef> Requested from IP</th>
                 <td mat-cell *matCellDef="let er"> {{er.clientIP}} </td>
+            </ng-container>
+            <ng-container matColumnDef="groups">
+                <th mat-header-cell *matHeaderCellDef> Groups</th>
+                <td mat-cell *matCellDef="let er"> {{er.groups}} </td>
+            </ng-container>
+            <ng-container matColumnDef="requestedIP">
+                <th mat-header-cell *matHeaderCellDef> Requested Nebula IP</th>
+                <td mat-cell *matCellDef="let er"> {{er.requestedIP}} </td>
             </ng-container>
             <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef></th>
@@ -59,7 +68,7 @@ import {AlertService} from "../alert/alert.service";
 })
 export class NetworkEnrollmentRequestsComponent implements OnDestroy {
     private subs = new SubSink();
-    displayedColumns: string[] = ['created', 'name', 'clientIP', 'actions'];
+    displayedColumns: string[] = ['created', 'name', 'clientIP', 'groups', 'requestedIP', 'actions'];
     @Input() enrollmentRequests: EnrollmentRequest[] = [];
 
     constructor(private apollo: Apollo, private dialog: MatDialog, private alert: AlertService) {
@@ -80,12 +89,12 @@ export class NetworkEnrollmentRequestsComponent implements OnDestroy {
             if (result) {
                 this.subs.sink = this.apollo.mutate<ApolloResponse>({
                     variables: {
-                        clientFingerprint: er.clientFingerprint
+                        fingerprint: er.fingerprint
                     },
-                    mutation: gql`mutation ApproveEnrollmentRequest($clientFingerprint: String!) {
-                        approveEnrollmentRequest(clientFingerprint: $clientFingerprint){
+                    mutation: gql`mutation ApproveEnrollmentRequest($fingerprint: String!) {
+                        approveEnrollmentRequest(fingerprint: $fingerprint){
                             created
-                            clientFingerprint
+                            fingerprint
                             assignedIP
                             groups
                             name
@@ -105,15 +114,15 @@ export class NetworkEnrollmentRequestsComponent implements OnDestroy {
     deleteEnrollmentRequest(er: EnrollmentRequest) {
         this.subs.sink = this.apollo.mutate({
             variables: {
-                clientFingerprint: er.clientFingerprint
+                fingerprint: er.fingerprint
             },
-            mutation: gql`mutation DeleteEnrollmentRequest($clientFingerprint: String!) {
-                deleteEnrollmentRequest(clientFingerprint: $clientFingerprint)
+            mutation: gql`mutation DeleteEnrollmentRequest($fingerprint: String!) {
+                deleteEnrollmentRequest(fingerprint: $fingerprint)
             }`,
             update: (cache) => {
                 const normalizedId = cache.identify({
                     __typename: 'EnrollmentRequest',
-                    clientFingerprint: er.clientFingerprint,
+                    fingerprint: er.fingerprint,
                 });
 
                 cache.evict({id: normalizedId});
@@ -127,23 +136,3 @@ export class NetworkEnrollmentRequestsComponent implements OnDestroy {
 }
 
 
-@Component({
-    selector: 'enrollment-request-approve-dialog',
-    template: `<h1 mat-dialog-title>Approve Enrollment Request</h1>
-    <mat-dialog-content class="mat-typography">
-        Created: {{er.created}}<br/>
-        Client fingerprint: {{er.clientFingerprint}}<br/>
-        Name: {{er.name}}<br/>
-        Client IP: {{er.clientIP}}<br/>
-        Network Name: {{er.networkName}}<br/>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-        <button mat-button mat-dialog-close>Cancel</button>
-        <button mat-button color="warn" [mat-dialog-close]="true">Approve</button>
-    </mat-dialog-actions>
-    `
-})
-export class EnrollmentRequestApproveDialog {
-    constructor(@Inject(MAT_DIALOG_DATA) public er: EnrollmentRequest) {
-    }
-}

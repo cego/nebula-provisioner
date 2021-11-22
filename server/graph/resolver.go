@@ -37,20 +37,20 @@ func WithUser(ctx context.Context, user model.User) context.Context {
 
 func toPointerSliceString(in []string) []*string {
 	out := make([]*string, len(in))
-	for i, v := range in {
-		out[i] = &v
+	for i := range in {
+		out[i] = &in[i]
 	}
 	return out
 }
 
 func agentToModel(a *store.Agent) *model.Agent {
 	agent := &model.Agent{
-		ClientFingerprint: hex.EncodeToString(a.ClientFingerprint),
-		Created:           a.Created.AsTime().Format(time.RFC3339),
-		NetworkName:       a.NetworkName,
-		Groups:            toPointerSliceString(a.Groups),
-		AssignedIP:        &a.AssignedIP,
-		Name:              &a.Name,
+		Fingerprint: hex.EncodeToString(a.ClientFingerprint),
+		Created:     a.Created.AsTime().Format(time.RFC3339),
+		NetworkName: a.NetworkName,
+		Groups:      toPointerSliceString(a.Groups),
+		AssignedIP:  &a.AssignedIP,
+		Name:        &a.Name,
 	}
 	if a.ExpiresAt != nil {
 		expiresAt := a.ExpiresAt.AsTime().Format(time.RFC3339)

@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/slackhq/nebula/cert"
@@ -31,8 +32,16 @@ var enrollCmd = &cobra.Command{
 		if err != nil {
 			l.WithError(err).Fatalln("failed to get token")
 		}
+		groups, err := cmd.Flags().GetString("groups")
+		if err != nil {
+			l.WithError(err).Fatalln("failed to get groups")
+		}
+		ip, err := cmd.Flags().GetString("ip")
+		if err != nil {
+			l.WithError(err).Fatalln("failed to get ip")
+		}
 
-		if err = enroll(agent, token); err != nil {
+		if err = enroll(agent, token, groups, ip); err != nil {
 			l.WithError(err).Fatalln("failed to enroll to server")
 		}
 	},
@@ -86,7 +95,16 @@ var enrollWaitCmd = &cobra.Command{
 		if status == 0 {
 			token, _ := cmd.Flags().GetString("token")
 			if token != "" {
-				if err := enroll(agent, token); err != nil {
+				groups, err := cmd.Flags().GetString("groups")
+				if err != nil {
+					l.WithError(err).Fatalln("failed to get groups")
+				}
+				ip, err := cmd.Flags().GetString("ip")
+				if err != nil {
+					l.WithError(err).Fatalln("failed to get ip")
+				}
+
+				if err := enroll(agent, token, groups, ip); err != nil {
 					l.WithError(err).Fatalln("failed to enroll to server")
 					os.Exit(2)
 				}
@@ -136,14 +154,19 @@ func getStatus(agent *agentClient) int8 {
 
 func init() {
 	enrollCmd.Flags().StringP("token", "t", "", "Enrollment token")
+	enrollCmd.Flags().StringP("groups", "g", "", "Comma separated list of groups")
+	enrollCmd.Flags().StringP("ip", "i", "", "Requesting for this specific nebula ip")
 	enrollCmd.MarkFlagRequired("token")
 	enrollWaitCmd.Flags().StringP("token", "t", "", "Enrollment token")
+	enrollWaitCmd.Flags().StringP("groups", "g", "", "Comma separated list of groups")
+	enrollWaitCmd.Flags().StringP("ip", "i", "", "Requesting for this specific nebula ip")
+	enrollWaitCmd.MarkFlagRequired("token")
 
 	enrollCmd.AddCommand(enrollStatusCmd)
 	enrollCmd.AddCommand(enrollWaitCmd)
 }
 
-func enroll(c *agentClient, enrollmentToken string) error {
+func enroll(c *agentClient, enrollmentToken, groups, ip string) error {
 	if enrollmentToken == "" {
 		return fmt.Errorf("requires enrollmentToken")
 	}
@@ -156,6 +179,17 @@ func enroll(c *agentClient, enrollmentToken string) error {
 	enrollRequest := &protocol.EnrollRequest{
 		Token:  enrollmentToken,
 		CsrPEM: string(csr),
+	}
+
+	if groups != "" {
+		g := strings.Split(groups, ",")
+		if len(g) > 0 {
+			enrollRequest.Groups = g
+		}
+	}
+
+	if ip != "" {
+		enrollRequest.RequestedIP = ip
 	}
 
 	hostname, err := os.Hostname()

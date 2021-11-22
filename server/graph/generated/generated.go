@@ -46,28 +46,30 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Agent struct {
-		AssignedIP        func(childComplexity int) int
-		ClientFingerprint func(childComplexity int) int
-		Created           func(childComplexity int) int
-		ExpiresAt         func(childComplexity int) int
-		Groups            func(childComplexity int) int
-		IssuedAt          func(childComplexity int) int
-		Name              func(childComplexity int) int
-		NetworkName       func(childComplexity int) int
+		AssignedIP  func(childComplexity int) int
+		Created     func(childComplexity int) int
+		ExpiresAt   func(childComplexity int) int
+		Fingerprint func(childComplexity int) int
+		Groups      func(childComplexity int) int
+		IssuedAt    func(childComplexity int) int
+		Name        func(childComplexity int) int
+		NetworkName func(childComplexity int) int
 	}
 
 	EnrollmentRequest struct {
-		ClientFingerprint func(childComplexity int) int
-		ClientIP          func(childComplexity int) int
-		Created           func(childComplexity int) int
-		Name              func(childComplexity int) int
-		NetworkName       func(childComplexity int) int
+		ClientIP    func(childComplexity int) int
+		Created     func(childComplexity int) int
+		Fingerprint func(childComplexity int) int
+		Groups      func(childComplexity int) int
+		Name        func(childComplexity int) int
+		NetworkName func(childComplexity int) int
+		RequestedIP func(childComplexity int) int
 	}
 
 	Mutation struct {
-		ApproveEnrollmentRequest func(childComplexity int, clientFingerprint string) int
+		ApproveEnrollmentRequest func(childComplexity int, fingerprint string) int
 		ApproveUser              func(childComplexity int, userID string) int
-		DeleteEnrollmentRequest  func(childComplexity int, clientFingerprint string) int
+		DeleteEnrollmentRequest  func(childComplexity int, fingerprint string) int
 		DisableUser              func(childComplexity int, userID string) int
 	}
 
@@ -85,6 +87,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		CurrentUser func(childComplexity int) int
+		GetAgent    func(childComplexity int, fingerprint string) int
 		GetNetwork  func(childComplexity int, name string) int
 		GetNetworks func(childComplexity int) int
 		GetUsers    func(childComplexity int) int
@@ -109,8 +112,8 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	ApproveUser(ctx context.Context, userID string) (*model.User, error)
 	DisableUser(ctx context.Context, userID string) (*model.User, error)
-	ApproveEnrollmentRequest(ctx context.Context, clientFingerprint string) (*model.Agent, error)
-	DeleteEnrollmentRequest(ctx context.Context, clientFingerprint string) (*bool, error)
+	ApproveEnrollmentRequest(ctx context.Context, fingerprint string) (*model.Agent, error)
+	DeleteEnrollmentRequest(ctx context.Context, fingerprint string) (*bool, error)
 }
 type NetworkResolver interface {
 	Agents(ctx context.Context, obj *model.Network) ([]*model.Agent, error)
@@ -122,6 +125,7 @@ type QueryResolver interface {
 	GetUsers(ctx context.Context) ([]*model.User, error)
 	GetNetworks(ctx context.Context) ([]*model.Network, error)
 	GetNetwork(ctx context.Context, name string) (*model.Network, error)
+	GetAgent(ctx context.Context, fingerprint string) (*model.Agent, error)
 }
 type UserApproveResolver interface {
 	ApprovedByUser(ctx context.Context, obj *model.UserApprove) (*model.User, error)
@@ -149,13 +153,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Agent.AssignedIP(childComplexity), true
 
-	case "Agent.clientFingerprint":
-		if e.complexity.Agent.ClientFingerprint == nil {
-			break
-		}
-
-		return e.complexity.Agent.ClientFingerprint(childComplexity), true
-
 	case "Agent.created":
 		if e.complexity.Agent.Created == nil {
 			break
@@ -169,6 +166,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Agent.ExpiresAt(childComplexity), true
+
+	case "Agent.fingerprint":
+		if e.complexity.Agent.Fingerprint == nil {
+			break
+		}
+
+		return e.complexity.Agent.Fingerprint(childComplexity), true
 
 	case "Agent.groups":
 		if e.complexity.Agent.Groups == nil {
@@ -198,13 +202,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Agent.NetworkName(childComplexity), true
 
-	case "EnrollmentRequest.clientFingerprint":
-		if e.complexity.EnrollmentRequest.ClientFingerprint == nil {
-			break
-		}
-
-		return e.complexity.EnrollmentRequest.ClientFingerprint(childComplexity), true
-
 	case "EnrollmentRequest.clientIP":
 		if e.complexity.EnrollmentRequest.ClientIP == nil {
 			break
@@ -218,6 +215,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.EnrollmentRequest.Created(childComplexity), true
+
+	case "EnrollmentRequest.fingerprint":
+		if e.complexity.EnrollmentRequest.Fingerprint == nil {
+			break
+		}
+
+		return e.complexity.EnrollmentRequest.Fingerprint(childComplexity), true
+
+	case "EnrollmentRequest.groups":
+		if e.complexity.EnrollmentRequest.Groups == nil {
+			break
+		}
+
+		return e.complexity.EnrollmentRequest.Groups(childComplexity), true
 
 	case "EnrollmentRequest.name":
 		if e.complexity.EnrollmentRequest.Name == nil {
@@ -233,6 +244,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.EnrollmentRequest.NetworkName(childComplexity), true
 
+	case "EnrollmentRequest.requestedIP":
+		if e.complexity.EnrollmentRequest.RequestedIP == nil {
+			break
+		}
+
+		return e.complexity.EnrollmentRequest.RequestedIP(childComplexity), true
+
 	case "Mutation.approveEnrollmentRequest":
 		if e.complexity.Mutation.ApproveEnrollmentRequest == nil {
 			break
@@ -243,7 +261,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ApproveEnrollmentRequest(childComplexity, args["clientFingerprint"].(string)), true
+		return e.complexity.Mutation.ApproveEnrollmentRequest(childComplexity, args["fingerprint"].(string)), true
 
 	case "Mutation.approveUser":
 		if e.complexity.Mutation.ApproveUser == nil {
@@ -267,7 +285,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteEnrollmentRequest(childComplexity, args["clientFingerprint"].(string)), true
+		return e.complexity.Mutation.DeleteEnrollmentRequest(childComplexity, args["fingerprint"].(string)), true
 
 	case "Mutation.disableUser":
 		if e.complexity.Mutation.DisableUser == nil {
@@ -350,6 +368,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.CurrentUser(childComplexity), true
+
+	case "Query.getAgent":
+		if e.complexity.Query.GetAgent == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getAgent_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetAgent(childComplexity, args["fingerprint"].(string)), true
 
 	case "Query.getNetwork":
 		if e.complexity.Query.GetNetwork == nil {
@@ -505,7 +535,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "server/graph/schema.graphqls", Input: `type Agent {
-    clientFingerprint: String!
+    fingerprint: String!
     created: String!
     networkName: String!
     groups: [String]
@@ -516,11 +546,13 @@ var sources = []*ast.Source{
 }
 
 type EnrollmentRequest {
-    clientFingerprint: String!
+    fingerprint: String!
     created: String!
     networkName: String!
     clientIP: String
     name: String
+    requestedIP: String
+    groups: [String]
 }
 
 type Network {
@@ -556,13 +588,14 @@ type Query {
     getUsers: [User]!
     getNetworks: [Network]!
     getNetwork(name: String!): Network!
+    getAgent(fingerprint: String!): Agent
 }
 
 type Mutation {
     approveUser(userId: String!): User
     disableUser(userId: String!): User
-    approveEnrollmentRequest(clientFingerprint: String!): Agent
-    deleteEnrollmentRequest(clientFingerprint: String!): Boolean
+    approveEnrollmentRequest(fingerprint: String!): Agent
+    deleteEnrollmentRequest(fingerprint: String!): Boolean
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -575,14 +608,14 @@ func (ec *executionContext) field_Mutation_approveEnrollmentRequest_args(ctx con
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["clientFingerprint"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientFingerprint"))
+	if tmp, ok := rawArgs["fingerprint"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fingerprint"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["clientFingerprint"] = arg0
+	args["fingerprint"] = arg0
 	return args, nil
 }
 
@@ -605,14 +638,14 @@ func (ec *executionContext) field_Mutation_deleteEnrollmentRequest_args(ctx cont
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["clientFingerprint"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientFingerprint"))
+	if tmp, ok := rawArgs["fingerprint"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fingerprint"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["clientFingerprint"] = arg0
+	args["fingerprint"] = arg0
 	return args, nil
 }
 
@@ -643,6 +676,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getAgent_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["fingerprint"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fingerprint"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["fingerprint"] = arg0
 	return args, nil
 }
 
@@ -699,7 +747,7 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Agent_clientFingerprint(ctx context.Context, field graphql.CollectedField, obj *model.Agent) (ret graphql.Marshaler) {
+func (ec *executionContext) _Agent_fingerprint(ctx context.Context, field graphql.CollectedField, obj *model.Agent) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -717,7 +765,7 @@ func (ec *executionContext) _Agent_clientFingerprint(ctx context.Context, field 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ClientFingerprint, nil
+		return obj.Fingerprint, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -964,7 +1012,7 @@ func (ec *executionContext) _Agent_name(ctx context.Context, field graphql.Colle
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _EnrollmentRequest_clientFingerprint(ctx context.Context, field graphql.CollectedField, obj *model.EnrollmentRequest) (ret graphql.Marshaler) {
+func (ec *executionContext) _EnrollmentRequest_fingerprint(ctx context.Context, field graphql.CollectedField, obj *model.EnrollmentRequest) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -982,7 +1030,7 @@ func (ec *executionContext) _EnrollmentRequest_clientFingerprint(ctx context.Con
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ClientFingerprint, nil
+		return obj.Fingerprint, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1133,6 +1181,70 @@ func (ec *executionContext) _EnrollmentRequest_name(ctx context.Context, field g
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _EnrollmentRequest_requestedIP(ctx context.Context, field graphql.CollectedField, obj *model.EnrollmentRequest) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EnrollmentRequest",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RequestedIP, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _EnrollmentRequest_groups(ctx context.Context, field graphql.CollectedField, obj *model.EnrollmentRequest) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "EnrollmentRequest",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Groups, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*string)
+	fc.Result = res
+	return ec.marshalOString2ᚕᚖstring(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_approveUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1236,7 +1348,7 @@ func (ec *executionContext) _Mutation_approveEnrollmentRequest(ctx context.Conte
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ApproveEnrollmentRequest(rctx, args["clientFingerprint"].(string))
+		return ec.resolvers.Mutation().ApproveEnrollmentRequest(rctx, args["fingerprint"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1275,7 +1387,7 @@ func (ec *executionContext) _Mutation_deleteEnrollmentRequest(ctx context.Contex
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteEnrollmentRequest(rctx, args["clientFingerprint"].(string))
+		return ec.resolvers.Mutation().DeleteEnrollmentRequest(rctx, args["fingerprint"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1725,6 +1837,45 @@ func (ec *executionContext) _Query_getNetwork(ctx context.Context, field graphql
 	res := resTmp.(*model.Network)
 	fc.Result = res
 	return ec.marshalNNetwork2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐNetwork(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getAgent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getAgent_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetAgent(rctx, args["fingerprint"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Agent)
+	fc.Result = res
+	return ec.marshalOAgent2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐAgent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3248,8 +3399,8 @@ func (ec *executionContext) _Agent(ctx context.Context, sel ast.SelectionSet, ob
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Agent")
-		case "clientFingerprint":
-			out.Values[i] = ec._Agent_clientFingerprint(ctx, field, obj)
+		case "fingerprint":
+			out.Values[i] = ec._Agent_fingerprint(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3295,8 +3446,8 @@ func (ec *executionContext) _EnrollmentRequest(ctx context.Context, sel ast.Sele
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("EnrollmentRequest")
-		case "clientFingerprint":
-			out.Values[i] = ec._EnrollmentRequest_clientFingerprint(ctx, field, obj)
+		case "fingerprint":
+			out.Values[i] = ec._EnrollmentRequest_fingerprint(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3314,6 +3465,10 @@ func (ec *executionContext) _EnrollmentRequest(ctx context.Context, sel ast.Sele
 			out.Values[i] = ec._EnrollmentRequest_clientIP(ctx, field, obj)
 		case "name":
 			out.Values[i] = ec._EnrollmentRequest_name(ctx, field, obj)
+		case "requestedIP":
+			out.Values[i] = ec._EnrollmentRequest_requestedIP(ctx, field, obj)
+		case "groups":
+			out.Values[i] = ec._EnrollmentRequest_groups(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3498,6 +3653,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
+				return res
+			})
+		case "getAgent":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getAgent(ctx, field)
 				return res
 			})
 		case "__type":

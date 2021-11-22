@@ -21,3 +21,11 @@ body {
 .snack-bar-danger {
   background-color: darkred;
 }
+
+.mat-row-selectable {
+  cursor: pointer;
+}
+
+.mat-row-selectable:hover {
+  background-color: #DDDDDD;
+}
