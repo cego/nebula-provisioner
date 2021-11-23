@@ -25,7 +25,7 @@ import {MatInputModule} from "@angular/material/input";
 import {MatGridListModule} from "@angular/material/grid-list";
 import {MatDialogModule} from "@angular/material/dialog";
 import {NetworkComponent} from "./networks/network.component";
-import {NetworkAgentsComponent} from "./networks/network-agents.component";
+import {NetworkAgentRevokeDialog, NetworkAgentsComponent} from "./networks/network-agents.component";
 import {NetworkEnrollmentRequestsComponent} from "./networks/network-enrollment-requests.component";
 import {AlertsComponent} from "./alert/alerts.component";
 import {MAT_SNACK_BAR_DEFAULT_OPTIONS, MatSnackBarModule} from "@angular/material/snack-bar";
@@ -41,6 +41,7 @@ import {CdkTableModule} from "@angular/cdk/table";
         NetworkComponent,
         NetworkAddComponent,
         NetworkAgentsComponent,
+        NetworkAgentRevokeDialog,
         NetworkEnrollmentRequestsComponent,
         UsersComponent,
         UserApproveDialog,

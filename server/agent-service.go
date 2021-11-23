@@ -132,6 +132,24 @@ func (a *agentService) GetCertificateAuthorityByNetwork(ctx context.Context, req
 	return &protocol.GetCertificateAuthorityByNetworkResponse{CertificateAuthorities: cas}, nil
 }
 
+func (a *agentService) GetCRLByNetwork(ctx context.Context, request *protocol.GetCRLByNetworkRequest) (*protocol.GetCRLByNetworkResponse, error) {
+	fingerprint, err := getClientCertFingerprint(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "Failed to get certificate fingerprint")
+	}
+	if !a.store.IsAgentEnrolled(fingerprint) {
+		return nil, status.Error(codes.PermissionDenied, "")
+	}
+
+	crls, err := a.store.ListCRLByNetwork(request.NetworkNames)
+	if err != nil {
+		a.l.WithError(err)
+		return nil, status.Error(codes.Internal, fmt.Sprintf("%s", err))
+	}
+
+	return &protocol.GetCRLByNetworkResponse{Crls: crls}, nil
+}
+
 func (s *server) stopAgentService() error {
 	s.l.Println("Stopping http agentService server")
 	if s.agentService != nil {

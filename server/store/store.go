@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/hashicorp/vault/shamir"
@@ -183,6 +184,25 @@ func exists(txn *badger.Txn, prefix, key []byte) bool {
 
 	for it.Seek(k); it.ValidForPrefix(k); it.Next() {
 		if bytes.Equal(it.Item().Key(), k) {
+			return true
+		}
+	}
+	return false
+}
+
+func containsIgnoreCase(s []string, e string) bool {
+	e = strings.ToLower(e)
+	for _, a := range s {
+		if strings.ToLower(a) == e {
+			return true
+		}
+	}
+	return false
+}
+
+func containsByteSlice(array [][]byte, value []byte) bool {
+	for _, v := range array {
+		if bytes.Equal(v, value) {
 			return true
 		}
 	}

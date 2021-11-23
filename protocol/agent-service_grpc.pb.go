@@ -22,6 +22,7 @@ type AgentServiceClient interface {
 	Enroll(ctx context.Context, in *EnrollRequest, opts ...grpc.CallOption) (*EnrollResponse, error)
 	GetEnrollStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetEnrollStatusResponse, error)
 	GetCertificateAuthorityByNetwork(ctx context.Context, in *GetCertificateAuthorityByNetworkRequest, opts ...grpc.CallOption) (*GetCertificateAuthorityByNetworkResponse, error)
+	GetCRLByNetwork(ctx context.Context, in *GetCRLByNetworkRequest, opts ...grpc.CallOption) (*GetCRLByNetworkResponse, error)
 }
 
 type agentServiceClient struct {
@@ -59,6 +60,15 @@ func (c *agentServiceClient) GetCertificateAuthorityByNetwork(ctx context.Contex
 	return out, nil
 }
 
+func (c *agentServiceClient) GetCRLByNetwork(ctx context.Context, in *GetCRLByNetworkRequest, opts ...grpc.CallOption) (*GetCRLByNetworkResponse, error) {
+	out := new(GetCRLByNetworkResponse)
+	err := c.cc.Invoke(ctx, "/protocol.AgentService/GetCRLByNetwork", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AgentServiceServer is the server API for AgentService service.
 // All implementations must embed UnimplementedAgentServiceServer
 // for forward compatibility
@@ -66,6 +76,7 @@ type AgentServiceServer interface {
 	Enroll(context.Context, *EnrollRequest) (*EnrollResponse, error)
 	GetEnrollStatus(context.Context, *emptypb.Empty) (*GetEnrollStatusResponse, error)
 	GetCertificateAuthorityByNetwork(context.Context, *GetCertificateAuthorityByNetworkRequest) (*GetCertificateAuthorityByNetworkResponse, error)
+	GetCRLByNetwork(context.Context, *GetCRLByNetworkRequest) (*GetCRLByNetworkResponse, error)
 	mustEmbedUnimplementedAgentServiceServer()
 }
 
@@ -81,6 +92,9 @@ func (UnimplementedAgentServiceServer) GetEnrollStatus(context.Context, *emptypb
 }
 func (UnimplementedAgentServiceServer) GetCertificateAuthorityByNetwork(context.Context, *GetCertificateAuthorityByNetworkRequest) (*GetCertificateAuthorityByNetworkResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCertificateAuthorityByNetwork not implemented")
+}
+func (UnimplementedAgentServiceServer) GetCRLByNetwork(context.Context, *GetCRLByNetworkRequest) (*GetCRLByNetworkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCRLByNetwork not implemented")
 }
 func (UnimplementedAgentServiceServer) mustEmbedUnimplementedAgentServiceServer() {}
 
@@ -149,6 +163,24 @@ func _AgentService_GetCertificateAuthorityByNetwork_Handler(srv interface{}, ctx
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AgentService_GetCRLByNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCRLByNetworkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).GetCRLByNetwork(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/protocol.AgentService/GetCRLByNetwork",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).GetCRLByNetwork(ctx, req.(*GetCRLByNetworkRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AgentService_ServiceDesc is the grpc.ServiceDesc for AgentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -167,6 +199,10 @@ var AgentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetCertificateAuthorityByNetwork",
 			Handler:    _AgentService_GetCertificateAuthorityByNetwork_Handler,
+		},
+		{
+			MethodName: "GetCRLByNetwork",
+			Handler:    _AgentService_GetCRLByNetwork_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

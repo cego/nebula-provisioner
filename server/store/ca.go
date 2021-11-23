@@ -56,9 +56,15 @@ func (s *Store) signCSR(txn *badger.Txn, agent *Agent, ip *net.IPNet) (*Agent, e
 		return nil, fmt.Errorf("error while parsing in-pub: %s", err)
 	}
 
+	name := hex.EncodeToString(agent.Fingerprint)
+
+	if agent.Name != "" {
+		name = agent.Name + "-" + name
+	}
+
 	nc := cert.NebulaCertificate{
 		Details: cert.NebulaCertificateDetails{
-			Name:   hex.EncodeToString(agent.ClientFingerprint), // TODO friendly name
+			Name:   name,
 			Ips:    []*net.IPNet{ip},
 			Groups: agent.Groups,
 			//Subnets:   subnets,
@@ -90,6 +96,43 @@ func (s *Store) signCSR(txn *badger.Txn, agent *Agent, ip *net.IPNet) (*Agent, e
 	agent.AssignedIP = ip.String()
 
 	return agent, nil
+}
+
+func (s *Store) RevokeAgent(fingerprint []byte) error {
+	txn := s.db.NewTransaction(true)
+	defer txn.Discard()
+
+	agent, err := s.getAgentByFingerprint(txn, fingerprint)
+	if err != nil {
+		return err
+	}
+
+	publicKey, _, err := cert.UnmarshalNebulaCertificateFromPEM([]byte(agent.SignedPEM))
+	if err != nil {
+		return fmt.Errorf("failed to parse certificate: %s", err.Error())
+	}
+
+	nebulaFingerprint, err := publicKey.Sha256Sum()
+	if err != nil {
+		return fmt.Errorf("failed to parse certificate: %s", err.Error())
+	}
+
+	err = s.addRevokedForNetwork(txn, agent.NetworkName, nebulaFingerprint)
+	if err != nil {
+		return fmt.Errorf("failed to add revoked fingerprint for network: %s", err)
+	}
+
+	err = s.deleteAgent(txn, fingerprint)
+	if err != nil {
+		return err
+	}
+
+	err = txn.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to commit revoke of agent")
+	}
+
+	return nil
 }
 
 func (s *Store) ListCAByNetwork(networks []string) ([]*protocol.CertificateAuthority, error) {
@@ -144,4 +187,42 @@ func (s *Store) listCAByNetwork(txn *badger.Txn, networks []string) ([]*CA, erro
 	}
 
 	return cas, nil
+}
+
+func (s *Store) ListCRLByNetwork(networks []string) ([]*protocol.NetworkCRL, error) {
+	txn := s.db.NewTransaction(false)
+	defer txn.Discard()
+
+	return s.listCRLByNetwork(txn, networks)
+}
+
+func (s *Store) listCRLByNetwork(txn *badger.Txn, networks []string) ([]*protocol.NetworkCRL, error) {
+	opts := badger.DefaultIteratorOptions
+	opts.PrefetchSize = 10
+	opts.Prefix = prefix_network_crl
+	it := txn.NewIterator(opts)
+	defer it.Close()
+
+	var crls []*protocol.NetworkCRL
+
+	for it.Seek(prefix_ca); it.ValidForPrefix(prefix_network_crl); it.Next() {
+		item := it.Item()
+		err := item.Value(func(v []byte) error {
+			crl := &protocol.NetworkCRL{}
+			if err := proto.Unmarshal(v, crl); err != nil {
+				s.l.WithError(err).Error("Failed to parse network")
+				return nil
+			}
+			if len(networks) == 0 || containsIgnoreCase(networks, crl.NetworkName) {
+				crls = append(crls, crl)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return crls, nil
 }
