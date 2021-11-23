@@ -198,13 +198,3 @@ func (s *Store) CreateNetwork(req *protocol.CreateNetworkRequest) (*protocol.Net
 
 	return &protocol.Network{Name: name}, nil
 }
-
-func containsIgnoreCase(s []string, e string) bool {
-	e = strings.ToLower(e)
-	for _, a := range s {
-		if strings.ToLower(a) == e {
-			return true
-		}
-	}
-	return false
-}

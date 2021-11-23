@@ -9,3 +9,8 @@ message CertificateAuthority {
   string publicKeyPEM = 10;
   string sha256sum = 11;
 }
+
+message NetworkCRL {
+  string networkName = 1;
+  repeated string fingerprints = 2;
+}

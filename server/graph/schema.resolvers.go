@@ -79,6 +79,23 @@ func (r *mutationResolver) DeleteEnrollmentRequest(ctx context.Context, fingerpr
 	return nil, nil
 }
 
+func (r *mutationResolver) RevokeCertsForAgent(ctx context.Context, fingerprint string) (*bool, error) {
+	if fingerprint == "" {
+		return nil, gqlerror.Errorf("fingerprint is required")
+	}
+
+	bytes, err := hex.DecodeString(fingerprint)
+	if err != nil {
+		return nil, gqlerror.Errorf("failed to decode fingerprint: %s", fingerprint)
+	}
+	err = r.store.RevokeAgent(bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
 func (r *networkResolver) Agents(ctx context.Context, obj *model.Network) ([]*model.Agent, error) {
 	if obj == nil {
 		return []*model.Agent{}, nil
@@ -125,7 +142,7 @@ func (r *networkResolver) EnrollmentRequests(ctx context.Context, obj *model.Net
 	gEnrollmentRequests := make([]*model.EnrollmentRequest, len(enrollmentRequests))
 	for i, a := range enrollmentRequests {
 		gEnrollmentRequests[i] = &model.EnrollmentRequest{
-			Fingerprint: hex.EncodeToString(a.ClientFingerprint),
+			Fingerprint: hex.EncodeToString(a.Fingerprint),
 			Created:     a.Created.AsTime().Format(time.RFC3339),
 			NetworkName: a.NetworkName,
 			ClientIP:    &a.ClientIP,

@@ -45,7 +45,7 @@ func toPointerSliceString(in []string) []*string {
 
 func agentToModel(a *store.Agent) *model.Agent {
 	agent := &model.Agent{
-		Fingerprint: hex.EncodeToString(a.ClientFingerprint),
+		Fingerprint: hex.EncodeToString(a.Fingerprint),
 		Created:     a.Created.AsTime().Format(time.RFC3339),
 		NetworkName: a.NetworkName,
 		Groups:      toPointerSliceString(a.Groups),

@@ -196,7 +196,7 @@ func (c *commandServer) ListEnrollmentRequests(context.Context, *emptypb.Empty) 
 
 	for _, req := range reqs {
 		mReqs = append(mReqs, &protocol.EnrollmentRequest{
-			ClientFingerprint: hex.EncodeToString(req.ClientFingerprint),
+			ClientFingerprint: hex.EncodeToString(req.Fingerprint),
 			Created:           req.Created,
 			NetworkName:       req.NetworkName,
 			ClientIP:          req.ClientIP,

@@ -60,4 +60,5 @@ type Mutation {
     disableUser(userId: String!): User
     approveEnrollmentRequest(fingerprint: String!): Agent
     deleteEnrollmentRequest(fingerprint: String!): Boolean
+    revokeCertsForAgent(fingerprint: String!): Boolean
 }

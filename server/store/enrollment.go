@@ -139,8 +139,8 @@ func (s *Store) CreateEnrollmentRequest(clientFingerprint []byte, token, csrPEM,
 	return er, err
 }
 
-func (s *Store) createEnrollmentRequest(txn *badger.Txn, clientFingerprint []byte, token, csrPEM, clientIP, name, requestedIP string, groups []string) (*EnrollmentRequest, error) {
-	if exists(txn, prefix_enrollment_req, clientFingerprint) {
+func (s *Store) createEnrollmentRequest(txn *badger.Txn, fingerprint []byte, token, csrPEM, clientIP, name, requestedIP string, groups []string) (*EnrollmentRequest, error) {
+	if exists(txn, prefix_enrollment_req, fingerprint) {
 		return nil, fmt.Errorf("enrollement request already exists")
 	}
 
@@ -150,14 +150,14 @@ func (s *Store) createEnrollmentRequest(txn *badger.Txn, clientFingerprint []byt
 	}
 
 	e := &EnrollmentRequest{
-		ClientFingerprint: clientFingerprint,
-		Created:           timestamppb.Now(),
-		Token:             token,
-		NetworkName:       t.NetworkName,
-		CsrPEM:            csrPEM,
-		ClientIP:          clientIP,
-		Name:              name,
-		Groups:            groups,
+		Fingerprint: fingerprint,
+		Created:     timestamppb.Now(),
+		Token:       token,
+		NetworkName: t.NetworkName,
+		CsrPEM:      csrPEM,
+		ClientIP:    clientIP,
+		Name:        name,
+		Groups:      groups,
 	}
 
 	if requestedIP != "" {
@@ -169,7 +169,7 @@ func (s *Store) createEnrollmentRequest(txn *badger.Txn, clientFingerprint []byt
 		return nil, fmt.Errorf("failed to marshal enrollment request: %s", err)
 	}
 
-	err = txn.Set(append(prefix_enrollment_req, clientFingerprint...), bytes)
+	err = txn.Set(append(prefix_enrollment_req, fingerprint...), bytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to add enrollment request: %s", err)
 	}
@@ -281,19 +281,19 @@ func (s *Store) DeleteEnrollmentRequest(clientFingerprint []byte) error {
 	return nil
 }
 
-func (s *Store) approveEnrollmentRequest(txn *badger.Txn, ipManager *IPManager, clientFingerprint []byte) (*Agent, error) {
+func (s *Store) approveEnrollmentRequest(txn *badger.Txn, ipManager *IPManager, fingerprint []byte) (*Agent, error) {
 
-	er, err := s.getEnrollmentRequest(txn, clientFingerprint)
+	er, err := s.getEnrollmentRequest(txn, fingerprint)
 	if err != nil {
 		return nil, err
 	}
 
 	agent := &Agent{
-		ClientFingerprint: clientFingerprint,
-		NetworkName:       er.NetworkName,
-		CsrPEM:            er.CsrPEM,
-		Groups:            er.Groups,
-		Name:              er.Name,
+		Fingerprint: fingerprint,
+		NetworkName: er.NetworkName,
+		CsrPEM:      er.CsrPEM,
+		Groups:      er.Groups,
+		Name:        er.Name,
 	}
 
 	var ip *net.IPNet
@@ -303,7 +303,7 @@ func (s *Store) approveEnrollmentRequest(txn *badger.Txn, ipManager *IPManager, 
 		if requestedIP == nil {
 			return nil, fmt.Errorf("failed to parse requested IP: %s", er.RequestedIP)
 		}
-		ip, err = ipManager.RequestForAgent(er.NetworkName, clientFingerprint, requestedIP)
+		ip, err = ipManager.RequestForAgent(er.NetworkName, fingerprint, requestedIP)
 		if err != nil {
 			return nil, err
 		}
@@ -325,19 +325,19 @@ func (s *Store) approveEnrollmentRequest(txn *badger.Txn, ipManager *IPManager, 
 		return nil, fmt.Errorf("failed to add agent as part of approving: %s", err)
 	}
 
-	if err = s.deleteEnrollmentRequest(txn, clientFingerprint); err != nil {
+	if err = s.deleteEnrollmentRequest(txn, fingerprint); err != nil {
 		return nil, err
 	}
 
 	return agent, nil
 }
 
-func (s *Store) getEnrollmentRequest(txn *badger.Txn, clientFingerprint []byte) (*EnrollmentRequest, error) {
-	if !exists(txn, prefix_enrollment_req, clientFingerprint) {
-		return nil, fmt.Errorf("enrollment request was not found: %s", clientFingerprint)
+func (s *Store) getEnrollmentRequest(txn *badger.Txn, fingerprint []byte) (*EnrollmentRequest, error) {
+	if !exists(txn, prefix_enrollment_req, fingerprint) {
+		return nil, fmt.Errorf("enrollment request was not found: %s", fingerprint)
 	}
 
-	t, err := txn.Get(append(prefix_enrollment_req, clientFingerprint...))
+	t, err := txn.Get(append(prefix_enrollment_req, fingerprint...))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get enrollment request: %s", err)
 	}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/golang/protobuf/proto"
+	"github.com/slyngdk/nebula-provisioner/protocol"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -15,12 +16,12 @@ func (s *Store) GetAgentByFingerprint(clientFingerprint []byte) (*Agent, error) 
 	return s.getAgentByFingerprint(txn, clientFingerprint)
 }
 
-func (s *Store) getAgentByFingerprint(txn *badger.Txn, clientFingerprint []byte) (*Agent, error) {
-	if !s.isAgentEnrolled(txn, clientFingerprint) {
-		return nil, fmt.Errorf("agent was not found: %s", clientFingerprint)
+func (s *Store) getAgentByFingerprint(txn *badger.Txn, fingerprint []byte) (*Agent, error) {
+	if !s.isAgentEnrolled(txn, fingerprint) {
+		return nil, fmt.Errorf("agent was not found: %x", fingerprint)
 	}
 
-	t, err := txn.Get(append(prefix_agent, clientFingerprint...))
+	t, err := txn.Get(append(prefix_agent, fingerprint...))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get agent: %s", err)
 	}
@@ -36,11 +37,11 @@ func (s *Store) getAgentByFingerprint(txn *badger.Txn, clientFingerprint []byte)
 	return a, err
 }
 
-func (s *Store) IsAgentEnrolled(clientFingerprint []byte) bool {
+func (s *Store) IsAgentEnrolled(fingerprint []byte) bool {
 	txn := s.db.NewTransaction(false)
 	defer txn.Discard()
 
-	return s.isAgentEnrolled(txn, clientFingerprint)
+	return s.isAgentEnrolled(txn, fingerprint)
 }
 
 func (s *Store) ListAgentByNetwork(networkName string) ([]*Agent, error) {
@@ -50,13 +51,13 @@ func (s *Store) ListAgentByNetwork(networkName string) ([]*Agent, error) {
 	return s.listAgentByNetwork(txn, networkName)
 }
 
-func (s *Store) isAgentEnrolled(txn *badger.Txn, clientFingerprint []byte) bool {
-	return exists(txn, prefix_agent, clientFingerprint)
+func (s *Store) isAgentEnrolled(txn *badger.Txn, fingerprint []byte) bool {
+	return exists(txn, prefix_agent, fingerprint)
 }
 
 func (s *Store) addAgent(txn *badger.Txn, agent *Agent) (*Agent, error) {
 
-	if exists(txn, prefix_agent, agent.ClientFingerprint) {
+	if exists(txn, prefix_agent, agent.Fingerprint) {
 		return nil, fmt.Errorf("agent already exists")
 	}
 
@@ -67,7 +68,7 @@ func (s *Store) addAgent(txn *badger.Txn, agent *Agent) (*Agent, error) {
 		return nil, fmt.Errorf("failed to marshal agent: %s", err)
 	}
 
-	err = txn.Set(append(prefix_agent, agent.ClientFingerprint...), bytes)
+	err = txn.Set(append(prefix_agent, agent.Fingerprint...), bytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to add agent: %s", err)
 	}
@@ -104,4 +105,55 @@ func (s *Store) listAgentByNetwork(txn *badger.Txn, networkName string) ([]*Agen
 	}
 
 	return agents, nil
+}
+
+func (s *Store) addRevokedForNetwork(txn *badger.Txn, networkName string, fingerprint string) error {
+	crl := &protocol.NetworkCRL{NetworkName: networkName}
+
+	key := append(prefix_network_crl, networkName...)
+	if exists(txn, prefix_network_crl, []byte(networkName)) {
+		item, err := txn.Get(key)
+		if err != nil {
+			return fmt.Errorf("failed to get NetworkCRL: %s", err)
+		}
+
+		err = item.Value(func(v []byte) error {
+			if err := proto.Unmarshal(v, crl); err != nil {
+				return fmt.Errorf("failed to unmarhal NetworkCRL: %s", err)
+			}
+			return nil
+		})
+
+		if err != nil {
+			return err
+		}
+	}
+
+	if !containsIgnoreCase(crl.Fingerprints, fingerprint) {
+		crl.Fingerprints = append(crl.Fingerprints, fingerprint)
+	}
+
+	bytes, err := proto.Marshal(crl)
+	if err != nil {
+		return fmt.Errorf("failed to marshal NetworkCRL: %s", err)
+	}
+
+	err = txn.Set(key, bytes)
+	if err != nil {
+		return fmt.Errorf("failed to set NetworkCRL: %s", err)
+	}
+
+	return nil
+}
+
+func (s *Store) deleteAgent(txn *badger.Txn, fingerprint []byte) error {
+	if !exists(txn, prefix_agent, fingerprint) {
+		return fmt.Errorf("agent was not found: %x", fingerprint)
+	}
+
+	err := txn.Delete(append(prefix_agent, fingerprint...))
+	if err != nil {
+		return fmt.Errorf("failed to remove agent: %s", err)
+	}
+	return nil
 }

@@ -11,8 +11,8 @@ package protocol;
 service AgentService {
   rpc Enroll (EnrollRequest) returns (EnrollResponse) {}
   rpc GetEnrollStatus (google.protobuf.Empty) returns (GetEnrollStatusResponse){}
-  rpc GetCertificateAuthorityByNetwork (GetCertificateAuthorityByNetworkRequest) returns (GetCertificateAuthorityByNetworkResponse) {
-  }
+  rpc GetCertificateAuthorityByNetwork (GetCertificateAuthorityByNetworkRequest) returns (GetCertificateAuthorityByNetworkResponse) {}
+  rpc GetCRLByNetwork (GetCRLByNetworkRequest) returns (GetCRLByNetworkResponse) {}
 }
 
 message EnrollRequest {
@@ -43,4 +43,12 @@ message GetCertificateAuthorityByNetworkRequest {
 
 message GetCertificateAuthorityByNetworkResponse {
   repeated CertificateAuthority  certificateAuthorities = 1;
+}
+
+message GetCRLByNetworkRequest {
+  repeated string networkNames = 1;
+}
+
+message GetCRLByNetworkResponse {
+  repeated NetworkCRL crls = 1;
 }

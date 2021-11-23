@@ -1,5 +1,9 @@
-import {Component, Input} from '@angular/core';
+import {Component, Inject, Input, OnDestroy} from '@angular/core';
 import {Agent} from "../models/agent";
+import {Apollo, gql} from "apollo-angular";
+import {SubSink} from "subsink";
+import {AlertService} from "../alert/alert.service";
+import {MAT_DIALOG_DATA, MatDialog} from "@angular/material/dialog";
 
 @Component({
     selector: 'app-network-agents',
@@ -21,6 +25,14 @@ import {Agent} from "../models/agent";
             <ng-container matColumnDef="assignedIP">
                 <th mat-header-cell *matHeaderCellDef> Nebula IP</th>
                 <td mat-cell *matCellDef="let agent"> {{agent.assignedIP}} </td>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let agent">
+                    <button mat-mini-fab color="warn" (click)="revokeAgentAccess(agent)">
+                        <mat-icon>delete</mat-icon>
+                    </button>
+                </td>
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="agentDisplayedColumns"></tr>
@@ -45,11 +57,69 @@ import {Agent} from "../models/agent";
       }
     `],
 })
-export class NetworkAgentsComponent {
-    agentDisplayedColumns: string[] = ['created', 'name', 'groups', 'assignedIP'];
+export class NetworkAgentsComponent implements OnDestroy {
+    private subs = new SubSink();
+    agentDisplayedColumns: string[] = ['created', 'name', 'groups', 'assignedIP', 'actions'];
     @Input() agents: Agent[] = [];
 
-    constructor() {
+    constructor(private apollo: Apollo, private dialog: MatDialog, private alert: AlertService) {
 
     }
+
+    ngOnDestroy(): void {
+        this.subs.unsubscribe();
+    }
+
+    revokeAgentAccess(agent: Agent) {
+        let dialogRef = this.dialog.open(NetworkAgentRevokeDialog, {
+            data: agent
+        });
+
+        dialogRef.afterClosed().subscribe(result => {
+            if (result) {
+                this.subs.sink = this.apollo.mutate({
+                    variables: {
+                        fingerprint: agent.fingerprint
+                    },
+                    mutation: gql`mutation RevokeCertsForAgent($fingerprint: String!) {
+                        revokeCertsForAgent(fingerprint: $fingerprint)
+                    }`,
+                    update: (cache) => {
+                        const normalizedId = cache.identify({
+                            __typename: 'Agent',
+                            fingerprint: agent.fingerprint,
+                        });
+
+                        cache.evict({id: normalizedId});
+                        cache.gc();
+                    }
+                }).subscribe(() => {
+                }, error => {
+                    this.alert.addAlert('danger', error.message);
+                })
+            }
+        });
+    }
+}
+
+
+@Component({
+    selector: 'agent-revoke-dialog',
+    template: `<h1 mat-dialog-title>Revoke Agent</h1>
+    <mat-dialog-content class="mat-typography">
+        Fingerprint: {{agent.fingerprint}} <br/>
+        Name: {{agent.name}} <br/>
+        Network: {{agent.networkName}} <br/>
+        Nebula IP: {{agent.assignedIP}} <br/>
+        Groups: {{agent.groups}}
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+        <button mat-button mat-dialog-close>Cancel</button>
+        <button mat-button color="warn" [mat-dialog-close]="true">Revoke</button>
+    </mat-dialog-actions>`
+})
+export class NetworkAgentRevokeDialog {
+    constructor(@Inject(MAT_DIALOG_DATA) public agent: Agent) {
+    }
+
 }

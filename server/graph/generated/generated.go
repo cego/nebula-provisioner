@@ -71,6 +71,7 @@ type ComplexityRoot struct {
 		ApproveUser              func(childComplexity int, userID string) int
 		DeleteEnrollmentRequest  func(childComplexity int, fingerprint string) int
 		DisableUser              func(childComplexity int, userID string) int
+		RevokeCertsForAgent      func(childComplexity int, fingerprint string) int
 	}
 
 	Network struct {
@@ -114,6 +115,7 @@ type MutationResolver interface {
 	DisableUser(ctx context.Context, userID string) (*model.User, error)
 	ApproveEnrollmentRequest(ctx context.Context, fingerprint string) (*model.Agent, error)
 	DeleteEnrollmentRequest(ctx context.Context, fingerprint string) (*bool, error)
+	RevokeCertsForAgent(ctx context.Context, fingerprint string) (*bool, error)
 }
 type NetworkResolver interface {
 	Agents(ctx context.Context, obj *model.Network) ([]*model.Agent, error)
@@ -298,6 +300,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DisableUser(childComplexity, args["userId"].(string)), true
+
+	case "Mutation.revokeCertsForAgent":
+		if e.complexity.Mutation.RevokeCertsForAgent == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_revokeCertsForAgent_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RevokeCertsForAgent(childComplexity, args["fingerprint"].(string)), true
 
 	case "Network.agents":
 		if e.complexity.Network.Agents == nil {
@@ -596,6 +610,7 @@ type Mutation {
     disableUser(userId: String!): User
     approveEnrollmentRequest(fingerprint: String!): Agent
     deleteEnrollmentRequest(fingerprint: String!): Boolean
+    revokeCertsForAgent(fingerprint: String!): Boolean
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -661,6 +676,21 @@ func (ec *executionContext) field_Mutation_disableUser_args(ctx context.Context,
 		}
 	}
 	args["userId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_revokeCertsForAgent_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["fingerprint"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fingerprint"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["fingerprint"] = arg0
 	return args, nil
 }
 
@@ -1388,6 +1418,45 @@ func (ec *executionContext) _Mutation_deleteEnrollmentRequest(ctx context.Contex
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().DeleteEnrollmentRequest(rctx, args["fingerprint"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_revokeCertsForAgent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_revokeCertsForAgent_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RevokeCertsForAgent(rctx, args["fingerprint"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3503,6 +3572,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_approveEnrollmentRequest(ctx, field)
 		case "deleteEnrollmentRequest":
 			out.Values[i] = ec._Mutation_deleteEnrollmentRequest(ctx, field)
+		case "revokeCertsForAgent":
+			out.Values[i] = ec._Mutation_revokeCertsForAgent(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

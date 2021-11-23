@@ -20,7 +20,7 @@ message EnrollmentToken {
 }
 
 message EnrollmentRequest {
-  bytes clientFingerprint = 1;
+  bytes fingerprint = 1;
   google.protobuf.Timestamp created = 2;
   string token = 3;
   string networkName = 4;
@@ -32,7 +32,7 @@ message EnrollmentRequest {
 }
 
 message Agent {
-  bytes clientFingerprint = 1;
+  bytes fingerprint = 1;
   google.protobuf.Timestamp created = 2;
   string networkName = 3;
   repeated string groups = 4;
