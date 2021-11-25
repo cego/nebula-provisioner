@@ -43,6 +43,8 @@ message Agent {
   google.protobuf.Timestamp issuedAt = 11;
   google.protobuf.Timestamp expiresAt = 12;
   string name = 13;
+
+  repeated string oldSignedPEMs = 20;
 }
 
 message IPRange {

@@ -5,7 +5,6 @@ import (
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/golang/protobuf/proto"
-	"github.com/slyngdk/nebula-provisioner/protocol"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -76,6 +75,25 @@ func (s *Store) addAgent(txn *badger.Txn, agent *Agent) (*Agent, error) {
 	return agent, nil
 }
 
+func (s *Store) updateAgent(txn *badger.Txn, agent *Agent) (*Agent, error) {
+
+	if !exists(txn, prefix_agent, agent.Fingerprint) {
+		return nil, fmt.Errorf("agent don't exists")
+	}
+
+	bytes, err := proto.Marshal(agent)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal agent: %s", err)
+	}
+
+	err = txn.Set(append(prefix_agent, agent.Fingerprint...), bytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update agent: %s", err)
+	}
+
+	return agent, nil
+}
+
 func (s *Store) listAgentByNetwork(txn *badger.Txn, networkName string) ([]*Agent, error) {
 	opts := badger.DefaultIteratorOptions
 	opts.PrefetchSize = 10
@@ -105,45 +123,6 @@ func (s *Store) listAgentByNetwork(txn *badger.Txn, networkName string) ([]*Agen
 	}
 
 	return agents, nil
-}
-
-func (s *Store) addRevokedForNetwork(txn *badger.Txn, networkName string, fingerprint string) error {
-	crl := &protocol.NetworkCRL{NetworkName: networkName}
-
-	key := append(prefix_network_crl, networkName...)
-	if exists(txn, prefix_network_crl, []byte(networkName)) {
-		item, err := txn.Get(key)
-		if err != nil {
-			return fmt.Errorf("failed to get NetworkCRL: %s", err)
-		}
-
-		err = item.Value(func(v []byte) error {
-			if err := proto.Unmarshal(v, crl); err != nil {
-				return fmt.Errorf("failed to unmarhal NetworkCRL: %s", err)
-			}
-			return nil
-		})
-
-		if err != nil {
-			return err
-		}
-	}
-
-	if !containsIgnoreCase(crl.Fingerprints, fingerprint) {
-		crl.Fingerprints = append(crl.Fingerprints, fingerprint)
-	}
-
-	bytes, err := proto.Marshal(crl)
-	if err != nil {
-		return fmt.Errorf("failed to marshal NetworkCRL: %s", err)
-	}
-
-	err = txn.Set(key, bytes)
-	if err != nil {
-		return fmt.Errorf("failed to set NetworkCRL: %s", err)
-	}
-
-	return nil
 }
 
 func (s *Store) deleteAgent(txn *badger.Txn, fingerprint []byte) error {

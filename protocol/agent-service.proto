@@ -29,12 +29,18 @@ message EnrollResponse {
 message GetEnrollStatusResponse {
   bool isEnrolled = 1;
   bool isEnrollmentRequested = 2;
+  EnrollRequest enrollmentRequest = 3;
 
   string signedPEM = 10;
   google.protobuf.Timestamp issuedAt = 11;
   google.protobuf.Timestamp expiresAt = 12;
+  string assignedIP = 13;
+  string name = 14;
+  repeated string groups = 15;
+  string signedPEMFingerprint = 16;
 
   repeated CertificateAuthority certificateAuthorities = 20;
+  repeated NetworkCRL certificateRevocationList = 21;
 }
 
 message GetCertificateAuthorityByNetworkRequest {

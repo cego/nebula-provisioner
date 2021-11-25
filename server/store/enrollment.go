@@ -1,6 +1,7 @@
 package store
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -37,12 +38,12 @@ func (s *Store) generateEnrollmentToken(txn *badger.Txn, network string) (*Enrol
 		return nil, fmt.Errorf("enrollment token already exists")
 	}
 
-	bytes, err := proto.Marshal(nt)
+	ntb, err := proto.Marshal(nt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal enrollment token: %s", err)
 	}
 
-	err = txn.Set(append(prefix_enrollment_token, nt.Token...), bytes)
+	err = txn.Set(append(prefix_enrollment_token, nt.Token...), ntb)
 	if err != nil {
 		return nil, fmt.Errorf("failed to add enrollment token: %s", err)
 	}
@@ -140,10 +141,6 @@ func (s *Store) CreateEnrollmentRequest(clientFingerprint []byte, token, csrPEM,
 }
 
 func (s *Store) createEnrollmentRequest(txn *badger.Txn, fingerprint []byte, token, csrPEM, clientIP, name, requestedIP string, groups []string) (*EnrollmentRequest, error) {
-	if exists(txn, prefix_enrollment_req, fingerprint) {
-		return nil, fmt.Errorf("enrollement request already exists")
-	}
-
 	t, err := s.getEnrollmentToken(txn, token)
 	if err != nil {
 		return nil, err
@@ -164,12 +161,12 @@ func (s *Store) createEnrollmentRequest(txn *badger.Txn, fingerprint []byte, tok
 		e.RequestedIP = requestedIP
 	}
 
-	bytes, err := proto.Marshal(e)
+	b, err := proto.Marshal(e)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal enrollment request: %s", err)
 	}
 
-	err = txn.Set(append(prefix_enrollment_req, fingerprint...), bytes)
+	err = txn.Set(append(prefix_enrollment_req, fingerprint...), b)
 	if err != nil {
 		return nil, fmt.Errorf("failed to add enrollment request: %s", err)
 	}
@@ -247,11 +244,11 @@ func (s *Store) ListEnrollmentRequestsByNetwork(networkName string) ([]*Enrollme
 	return requests, nil
 }
 
-func (s *Store) ApproveEnrollmentRequest(ipManager *IPManager, clientFingerprint []byte) (*Agent, error) {
+func (s *Store) ApproveEnrollmentRequest(ipManager *IPManager, fingerprint []byte) (*Agent, error) {
 	txn := s.db.NewTransaction(true)
 	defer txn.Discard()
 
-	agent, err := s.approveEnrollmentRequest(txn, ipManager, clientFingerprint)
+	agent, err := s.approveEnrollmentRequest(txn, ipManager, fingerprint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to approve enrollment request: %s", err)
 	}
@@ -264,11 +261,11 @@ func (s *Store) ApproveEnrollmentRequest(ipManager *IPManager, clientFingerprint
 	return agent, nil
 }
 
-func (s *Store) DeleteEnrollmentRequest(clientFingerprint []byte) error {
+func (s *Store) DeleteEnrollmentRequest(fingerprint []byte) error {
 	txn := s.db.NewTransaction(true)
 	defer txn.Discard()
 
-	err := s.deleteEnrollmentRequest(txn, clientFingerprint)
+	err := s.deleteEnrollmentRequest(txn, fingerprint)
 	if err != nil {
 		return fmt.Errorf("failed to delete enrollment request: %s", err)
 	}
@@ -281,20 +278,41 @@ func (s *Store) DeleteEnrollmentRequest(clientFingerprint []byte) error {
 	return nil
 }
 
+func (s *Store) GetEnrollmentRequest(fingerprint []byte) (*EnrollmentRequest, error) {
+	txn := s.db.NewTransaction(false)
+	defer txn.Discard()
+
+	er, err := s.getEnrollmentRequest(txn, fingerprint)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete enrollment request: %s", err)
+	}
+
+	return er, nil
+}
+
 func (s *Store) approveEnrollmentRequest(txn *badger.Txn, ipManager *IPManager, fingerprint []byte) (*Agent, error) {
 
 	er, err := s.getEnrollmentRequest(txn, fingerprint)
 	if err != nil {
 		return nil, err
 	}
+	enrolled := s.isAgentEnrolled(txn, fingerprint)
 
 	agent := &Agent{
 		Fingerprint: fingerprint,
 		NetworkName: er.NetworkName,
-		CsrPEM:      er.CsrPEM,
-		Groups:      er.Groups,
-		Name:        er.Name,
 	}
+
+	if enrolled {
+		agent, err = s.getAgentByFingerprint(txn, fingerprint)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get existing agent: %s", err)
+		}
+	}
+
+	agent.CsrPEM = er.CsrPEM
+	agent.Groups = er.Groups
+	agent.Name = er.Name
 
 	var ip *net.IPNet
 
@@ -303,16 +321,46 @@ func (s *Store) approveEnrollmentRequest(txn *badger.Txn, ipManager *IPManager, 
 		if requestedIP == nil {
 			return nil, fmt.Errorf("failed to parse requested IP: %s", er.RequestedIP)
 		}
-		ip, err = ipManager.RequestForAgent(er.NetworkName, fingerprint, requestedIP)
-		if err != nil {
-			return nil, err
+		if enrolled || agent.AssignedIP != "" {
+			ip, _, err := net.ParseCIDR(agent.AssignedIP)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse ip of existing agent: %s", err)
+			}
+
+			if !bytes.Equal(ip, requestedIP) {
+				return nil, fmt.Errorf("requested is diffent from the existing on that agent")
+			}
+		} else {
+			ip, err = ipManager.RequestForAgent(er.NetworkName, fingerprint, requestedIP)
+			if err != nil {
+				return nil, err
+			}
 		}
 	} else {
-		ip = ipManager.Next(er.NetworkName)
+		if agent.AssignedIP == "" {
+			ip = ipManager.Next(er.NetworkName)
+		}
+	}
+
+	if enrolled {
+		i, n, err := net.ParseCIDR(agent.AssignedIP)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse ip of existing agent: %s", err)
+		}
+		ip = &net.IPNet{
+			IP:   i,
+			Mask: n.Mask,
+		}
 	}
 
 	if ip == nil {
 		return nil, fmt.Errorf("failed to get ip for agent")
+	}
+
+	if enrolled {
+		if !containsIgnoreCase(agent.OldSignedPEMs, agent.SignedPEM) {
+			agent.OldSignedPEMs = append(agent.OldSignedPEMs, agent.SignedPEM)
+		}
 	}
 
 	agent, err = s.signCSR(txn, agent, ip)
@@ -320,9 +368,16 @@ func (s *Store) approveEnrollmentRequest(txn *badger.Txn, ipManager *IPManager, 
 		return nil, fmt.Errorf("failed to sign agent csr: %s", err)
 	}
 
-	agent, err = s.addAgent(txn, agent)
-	if err != nil {
-		return nil, fmt.Errorf("failed to add agent as part of approving: %s", err)
+	if enrolled {
+		agent, err = s.updateAgent(txn, agent)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update agent as part of approving: %s", err)
+		}
+	} else {
+		agent, err = s.addAgent(txn, agent)
+		if err != nil {
+			return nil, fmt.Errorf("failed to add agent as part of approving: %s", err)
+		}
 	}
 
 	if err = s.deleteEnrollmentRequest(txn, fingerprint); err != nil {
