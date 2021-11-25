@@ -107,17 +107,23 @@ func (s *Store) RevokeAgent(fingerprint []byte) error {
 		return err
 	}
 
-	publicKey, _, err := cert.UnmarshalNebulaCertificateFromPEM([]byte(agent.SignedPEM))
+	nebulaFingerprints := make([]string, 0)
+
+	nebulaFingerprint, err := NebulaFingerprintFromPEM(agent.SignedPEM)
 	if err != nil {
-		return fmt.Errorf("failed to parse certificate: %s", err.Error())
+		return err
+	}
+	nebulaFingerprints = append(nebulaFingerprints, nebulaFingerprint)
+
+	for _, f := range agent.OldSignedPEMs {
+		nebulaFingerprint, err = NebulaFingerprintFromPEM(f)
+		if err != nil {
+			return err
+		}
+		nebulaFingerprints = append(nebulaFingerprints, nebulaFingerprint)
 	}
 
-	nebulaFingerprint, err := publicKey.Sha256Sum()
-	if err != nil {
-		return fmt.Errorf("failed to parse certificate: %s", err.Error())
-	}
-
-	err = s.addRevokedForNetwork(txn, agent.NetworkName, nebulaFingerprint)
+	err = s.addRevokedForNetwork(txn, agent.NetworkName, nebulaFingerprints)
 	if err != nil {
 		return fmt.Errorf("failed to add revoked fingerprint for network: %s", err)
 	}
@@ -225,4 +231,60 @@ func (s *Store) listCRLByNetwork(txn *badger.Txn, networks []string) ([]*protoco
 	}
 
 	return crls, nil
+}
+
+func (s *Store) addRevokedForNetwork(txn *badger.Txn, networkName string, fingerprints []string) error {
+	crl := &protocol.NetworkCRL{NetworkName: networkName}
+
+	key := append(prefix_network_crl, networkName...)
+	if exists(txn, prefix_network_crl, []byte(networkName)) {
+		item, err := txn.Get(key)
+		if err != nil {
+			return fmt.Errorf("failed to get NetworkCRL: %s", err)
+		}
+
+		err = item.Value(func(v []byte) error {
+			if err := proto.Unmarshal(v, crl); err != nil {
+				return fmt.Errorf("failed to unmarhal NetworkCRL: %s", err)
+			}
+			return nil
+		})
+
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, f := range fingerprints {
+		if !containsIgnoreCase(crl.Fingerprints, f) {
+			crl.Fingerprints = append(crl.Fingerprints, f)
+		}
+	}
+
+	bytes, err := proto.Marshal(crl)
+	if err != nil {
+		return fmt.Errorf("failed to marshal NetworkCRL: %s", err)
+	}
+
+	err = txn.Set(key, bytes)
+	if err != nil {
+		return fmt.Errorf("failed to set NetworkCRL: %s", err)
+	}
+
+	return nil
+}
+
+func NebulaFingerprintFromPEM(pem string) (string, error) {
+	publicKey, _, err := cert.UnmarshalNebulaCertificateFromPEM([]byte(pem))
+	if err != nil {
+		fmt.Println(err)
+		return "", fmt.Errorf("failed to parse certificate: %s", err.Error())
+	}
+
+	nebulaFingerprint, err := publicKey.Sha256Sum()
+	if err != nil {
+		return "", fmt.Errorf("failed to parse certificate: %s", err.Error())
+	}
+
+	return nebulaFingerprint, nil
 }

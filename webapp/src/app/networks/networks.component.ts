@@ -92,7 +92,6 @@ export class NetworksComponent implements OnInit, OnDestroy {
     }
 
     openNetwork(network: Network) {
-        console.log(network);
         this.router.navigate(['networks', network.name])
     }
 }

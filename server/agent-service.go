@@ -94,6 +94,19 @@ func (a *agentService) GetEnrollStatus(ctx context.Context, _ *emptypb.Empty) (*
 		IsEnrollmentRequested: a.store.EnrollmentRequestExists(fingerprint),
 	}
 
+	if res.IsEnrollmentRequested {
+		er, err := a.store.GetEnrollmentRequest(fingerprint)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "Failed to get enrollment request")
+		}
+		res.EnrollmentRequest = &protocol.EnrollRequest{
+			CsrPEM:      er.CsrPEM,
+			Groups:      er.Groups,
+			Name:        er.Name,
+			RequestedIP: er.RequestedIP,
+		}
+	}
+
 	if res.IsEnrolled {
 		agent, err := a.store.GetAgentByFingerprint(fingerprint)
 		if err != nil {
@@ -102,13 +115,30 @@ func (a *agentService) GetEnrollStatus(ctx context.Context, _ *emptypb.Empty) (*
 		res.SignedPEM = agent.SignedPEM
 		res.IssuedAt = agent.IssuedAt
 		res.ExpiresAt = agent.ExpiresAt
+		res.Name = agent.Name
+		res.Groups = agent.Groups
+
+		nebulaFingerprint, err := store.NebulaFingerprintFromPEM(agent.SignedPEM)
+		if err == nil {
+			res.SignedPEMFingerprint = nebulaFingerprint
+		}
+
+		ip, _, err := net.ParseCIDR(agent.AssignedIP)
+		if err == nil {
+			res.AssignedIP = ip.String()
+		}
 
 		cas, err := a.store.ListCAByNetwork([]string{agent.NetworkName})
 		if err != nil {
-			return nil, status.Error(codes.Internal, "Failed to certificateAuthorities for network")
+			return nil, status.Error(codes.Internal, "Failed to get certificate authorities for network")
 		}
-
 		res.CertificateAuthorities = cas
+
+		crl, err := a.store.ListCRLByNetwork([]string{agent.NetworkName})
+		if err != nil {
+			return nil, status.Error(codes.Internal, "Failed to get certificate revoke list for network")
+		}
+		res.CertificateRevocationList = crl
 	}
 
 	return res, nil

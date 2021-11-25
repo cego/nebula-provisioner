@@ -27,7 +27,7 @@ import {AlertService} from "../alert/alert.service";
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;" [class.mat-row-conflict]="row.conflict"></tr>
         </table>
 
         <hr>
@@ -41,7 +41,12 @@ import {AlertService} from "../alert/alert.service";
     styles: [`
       table {
         width: 100%;
-      }`]
+      }
+
+      .mat-row-conflict {
+        background-color: lightcoral;
+      }
+    `]
 })
 export class EnrollmentRequestApproveDialog implements AfterViewInit, OnDestroy {
     private subs = new SubSink();
@@ -64,6 +69,12 @@ export class EnrollmentRequestApproveDialog implements AfterViewInit, OnDestroy 
     }
 
     renderRows() {
+        let assignedIP = this.existingAgent?.assignedIP.substr(0, this.existingAgent?.assignedIP.indexOf('/'));
+
+        const removed = this.existingAgent?.groups.filter((x: any) => !this.er.groups?.includes(x));
+        const added = this.er.groups?.filter((x: any) => !this.existingAgent?.groups.includes(x));
+        const groupConflict = ((removed) ? removed.length > 0 : false) || ((added) ? added!.length > 0 : false)
+
         this.datasource = [
             {
                 name: 'Created',
@@ -73,17 +84,20 @@ export class EnrollmentRequestApproveDialog implements AfterViewInit, OnDestroy 
             {
                 name: 'Agent Name',
                 old: this.existingAgent?.name,
-                new: this.er.name
+                new: this.er.name,
+                conflict: (this.existingAgent?.name != this.er.name)
             },
             {
                 name: 'Nebula IP',
-                old: this.existingAgent?.assignedIP,
-                new: this.er.requestedIP
+                old: assignedIP,
+                new: this.er.requestedIP,
+                conflict: (this.er.requestedIP != null && assignedIP != this.er.requestedIP),
             },
             {
                 name: 'Groups',
                 old: this.existingAgent?.groups,
-                new: this.er.groups
+                new: this.er.groups,
+                conflict: groupConflict
             }
         ];
     }

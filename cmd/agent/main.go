@@ -12,6 +12,7 @@ import (
 	"math"
 	"math/big"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -37,6 +38,7 @@ const AgentNebulaCaPath = "agent-nebula-ca.crt"
 var (
 	l          *logrus.Logger
 	configPath string
+	configDir  string
 	config     *nebula.Config
 
 	rootCmd = &cobra.Command{}
@@ -55,7 +57,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVarP(&configPath, "config", "c", "agent.yml", "Path to either a file or directory to load configuration from")
+	rootCmd.PersistentFlags().StringVarP(&configPath, "config", "c", "", "Path to either a file or directory to load configuration from")
 
 	rootCmd.AddCommand(configCmd, enrollCmd, exportCmd)
 }
@@ -64,12 +66,21 @@ func initConfig() {
 	l = logrus.New()
 	l.Out = os.Stdout
 	config = nebula.NewConfig(l)
+
+	if configPath == "" {
+		configPath = getConfigDir()
+	}
+
 	if configPath != "" {
+		configDir = filepath.Dir(configPath)
 		err := config.Load(configPath)
 		if err != nil {
-			l.WithError(err).Printf("failed to load config")
+			l.WithError(err).Errorln("failed to load config")
 			os.Exit(1)
 		}
+	} else {
+		l.Errorf("failed to detect config path")
+		os.Exit(1)
 	}
 }
 
@@ -87,8 +98,8 @@ func NewClient(l *logrus.Logger, config *nebula.Config) (*agentClient, error) {
 
 	var opts []grpc.DialOption
 
-	cert := config.GetString("pki.cert", "agent.crt")
-	key := config.GetString("pki.key", "agent.key")
+	cert := resolvePath(config.GetString("pki.cert", "agent.crt"))
+	key := resolvePath(config.GetString("pki.key", "agent.key"))
 
 	certExists, _ := fileExists(cert)
 	keyExists, _ := fileExists(key)
@@ -116,7 +127,7 @@ func NewClient(l *logrus.Logger, config *nebula.Config) (*agentClient, error) {
 
 	var caCertPool *x509.CertPool
 	if config.IsSet("pki.ca") {
-		ca := config.GetString("pki.ca", "ca.crt")
+		ca := resolvePath(config.GetString("pki.ca", "ca.crt"))
 		srvcert, err := ioutil.ReadFile(ca)
 		if err != nil {
 			return nil, fmt.Errorf("unable to load server cert pool: %v", err)
