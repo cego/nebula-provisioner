@@ -71,12 +71,24 @@ func initConfig() {
 	config = nebula.NewConfig(l)
 
 	if configPath == "" {
-		configPath = getConfigDir()
+		configPath = getConfigPath()
 	}
 
 	if configPath != "" {
-		configDir = filepath.Dir(configPath)
-		err := config.Load(configPath)
+
+		configPathInfo, err := os.Stat(configPath)
+		if err != nil {
+			l.WithError(err).Errorln("failed to load config")
+			os.Exit(1)
+		}
+
+		if configPathInfo.IsDir() {
+			configDir = configPath
+		} else {
+			configDir = filepath.Dir(configPath)
+		}
+
+		err = config.Load(configPath)
 		if err != nil {
 			l.WithError(err).Errorln("failed to load config")
 			os.Exit(1)
@@ -96,6 +108,8 @@ func initConfig() {
 		l.Errorf("failed to detect config path")
 		os.Exit(1)
 	}
+	l.Tracef("using config: %s", configPath)
+	l.Tracef("using config dir: %s", configDir)
 }
 
 func main() {

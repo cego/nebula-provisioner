@@ -27,7 +27,7 @@ func dirExists(path string) (bool, os.FileInfo) {
 	return fileinfo.IsDir(), fileinfo
 }
 
-func getConfigDir() string {
+func getConfigPath() string {
 	ok, _ := dirExists("/etc/nebula-provisioner")
 	if ok {
 		return "/etc/nebula-provisioner"
