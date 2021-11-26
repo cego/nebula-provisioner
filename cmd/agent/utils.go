@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"sort"
 )
 
 func fileExists(filepath string) (bool, os.FileInfo) {
@@ -51,4 +52,19 @@ func resolvePath(path string) string {
 		path = filepath.Join(configDir, path)
 	}
 	return path
+}
+
+func stringSlicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	sort.Strings(a)
+	sort.Strings(b)
+
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
 }
