@@ -61,7 +61,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&configPath, "config", "c", "", "Path to either a file or directory to load configuration from")
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", logrus.InfoLevel.String(), "Log level (debug, info, warn, error, fatal, panic)")
 
-	rootCmd.AddCommand(configCmd, enrollCmd, exportCmd, serviceCmd)
+	rootCmd.AddCommand(enrollCmd, exportCmd, serviceCmd)
 }
 
 func initConfig() {
