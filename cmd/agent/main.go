@@ -37,6 +37,7 @@ const AgentNebulaCaPath = "agent-nebula-ca.crt"
 
 var (
 	l          *logrus.Logger
+	logLevel   string
 	configPath string
 	configDir  string
 	config     *nebula.Config
@@ -58,13 +59,15 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().StringVarP(&configPath, "config", "c", "", "Path to either a file or directory to load configuration from")
+	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", logrus.InfoLevel.String(), "Log level (debug, info, warn, error, fatal, panic)")
 
-	rootCmd.AddCommand(configCmd, enrollCmd, exportCmd)
+	rootCmd.AddCommand(configCmd, enrollCmd, exportCmd, serviceCmd)
 }
 
 func initConfig() {
 	l = logrus.New()
 	l.Out = os.Stdout
+
 	config = nebula.NewConfig(l)
 
 	if configPath == "" {
@@ -78,6 +81,17 @@ func initConfig() {
 			l.WithError(err).Errorln("failed to load config")
 			os.Exit(1)
 		}
+
+		if config.IsSet("log.level") && !rootCmd.Flag("log-level").Changed {
+			logLevel = config.GetString("log.level", "info")
+		}
+
+		level, err := logrus.ParseLevel(logLevel)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		l.SetLevel(level)
 	} else {
 		l.Errorf("failed to detect config path")
 		os.Exit(1)
@@ -186,8 +200,8 @@ func generateAgentKeyPair(cert, key string) error {
 		NotAfter:     time.Now().AddDate(5, 0, 0),
 		SerialNumber: serial,
 		Subject: pkix.Name{
-			CommonName:   "New Name",
-			Organization: []string{"New Org."},
+			CommonName:   "New Name",           // FIXME
+			Organization: []string{"New Org."}, // FIXME
 		},
 		BasicConstraintsValid: true,
 	}

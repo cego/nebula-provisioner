@@ -10,6 +10,7 @@ require (
 	github.com/gorilla/sessions v1.2.1
 	github.com/hashicorp/vault v1.8.4
 	github.com/lafriks/go-spaproxy v0.2.0
+	github.com/mitchellh/go-ps v1.0.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/slackhq/nebula v1.4.0
 	github.com/spf13/cobra v1.2.1
