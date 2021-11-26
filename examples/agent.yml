@@ -5,3 +5,10 @@
 
 # Address to the server <host:port>
 #server: "host:port"
+
+#log:
+#  level: debug
+
+service:
+  config_template: nebula.yml.template
+  config_output: nebula-generated
