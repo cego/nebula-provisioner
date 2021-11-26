@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/mitchellh/go-ps"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -10,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/mitchellh/go-ps"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gopkg.in/yaml.v3"
