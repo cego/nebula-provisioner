@@ -175,7 +175,7 @@ func updateEnrollmentRequest(agent *agentClient, cmd *cobra.Command) {
 		}
 
 		l.Debugf("ip compare %s <=> %s", ip, status.AssignedIP)
-		if ip != status.AssignedIP {
+		if ip != status.AssignedIP && ip != "" {
 			diff = true
 			l.Debugf("diff on ip")
 		}
