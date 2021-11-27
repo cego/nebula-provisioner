@@ -25,6 +25,7 @@ type server struct {
 	ipManager    *store.IPManager
 	unixGrpc     *grpc.Server
 	agentService *grpc.Server
+	tasks        *tasks
 }
 
 func Main(config *nebula.Config, buildVersion string, logger *logrus.Logger) (*Control, error) {
@@ -33,7 +34,7 @@ func Main(config *nebula.Config, buildVersion string, logger *logrus.Logger) (*C
 		FullTimestamp: true,
 	}
 
-	server := server{l, config, buildVersion, false, nil, nil, nil, nil}
+	server := server{l, config, buildVersion, false, nil, nil, nil, nil, nil}
 
 	return &Control{l, server.start, server.stop, make(chan interface{})}, nil
 }
@@ -91,12 +92,18 @@ func (s *server) start() error {
 		if err != nil {
 			return err
 		}
+		s.tasks = NewTasks(s.l, s.config, s.store)
+		s.tasks.Start()
 	}
 
 	return nil
 }
 
 func (s *server) stop() {
+	if s.tasks != nil {
+		s.tasks.Stop()
+	}
+
 	if err := s.stopAgentService(); err != nil {
 		s.l.WithError(err).Error("Failed to stop agentService server")
 	}

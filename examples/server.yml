@@ -27,3 +27,9 @@
 #  authUrl: ""
 #  tokenUrl: ""
 #  userInfoUrl: ""
+
+#tasks:
+#  certRenew:
+#    interval: 1h
+#  dbGC:
+#    interval: 5m
