@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"path"
 	"path/filepath"
@@ -135,6 +136,14 @@ func (s *Store) Unseal(keyPart string, removeExistingParts bool) error {
 	return nil
 }
 
+func (s *Store) GC() {
+again:
+	err := s.db.RunValueLogGC(0.7)
+	if err == nil {
+		goto again
+	}
+}
+
 func NewStore(l *logrus.Logger, dataDir string, unsealed chan interface{}, encryptionEnabled bool) (*Store, error) {
 	dbPath := filepath.Join(dataDir, "db")
 	stat, err := os.Stat(dbPath)
@@ -207,4 +216,15 @@ func containsByteSlice(array [][]byte, value []byte) bool {
 		}
 	}
 	return false
+}
+
+func assignedIPToIPNet(assignedIP string) (*net.IPNet, error) {
+	i, n, err := net.ParseCIDR(assignedIP)
+	if err != nil {
+		return nil, err
+	}
+	return &net.IPNet{
+		IP:   i,
+		Mask: n.Mask,
+	}, nil
 }

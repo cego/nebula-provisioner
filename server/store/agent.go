@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/golang/protobuf/proto"
@@ -48,6 +49,23 @@ func (s *Store) ListAgentByNetwork(networkName string) ([]*Agent, error) {
 	defer txn.Discard()
 
 	return s.listAgentByNetwork(txn, networkName)
+}
+
+func (s Store) RenewCertForAgents() error {
+	txn := s.db.NewTransaction(true)
+	defer txn.Discard()
+
+	err := s.renewCertForAgents(txn)
+	if err != nil {
+		return fmt.Errorf("failed to new certificates for agents")
+	}
+
+	err = txn.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to add enrollment token: %s", err)
+	}
+
+	return nil
 }
 
 func (s *Store) isAgentEnrolled(txn *badger.Txn, fingerprint []byte) bool {
@@ -133,6 +151,53 @@ func (s *Store) deleteAgent(txn *badger.Txn, fingerprint []byte) error {
 	err := txn.Delete(append(prefix_agent, fingerprint...))
 	if err != nil {
 		return fmt.Errorf("failed to remove agent: %s", err)
+	}
+	return nil
+}
+
+func (s Store) renewCertForAgents(txn *badger.Txn) error {
+	renewThreshold := 7 * 24 * time.Hour
+
+	opts := badger.DefaultIteratorOptions
+	opts.PrefetchSize = 10
+	opts.Prefix = prefix_agent
+	it := txn.NewIterator(opts)
+	defer it.Close()
+
+	for it.Seek(prefix_agent); it.ValidForPrefix(prefix_agent); it.Next() {
+		item := it.Item()
+		err := item.Value(func(v []byte) error {
+			agent := &Agent{}
+			if err := proto.Unmarshal(v, agent); err != nil {
+				s.l.WithError(err).Error("Failed to parse agent")
+				return nil
+			}
+
+			untilExpires := time.Until(agent.ExpiresAt.AsTime())
+
+			if untilExpires.Hours() < renewThreshold.Hours() {
+				s.l.Debugf("Renewing certificate for agent: %s %x", agent.Name, agent.Fingerprint)
+				ip, err := assignedIPToIPNet(agent.AssignedIP)
+				if err != nil {
+					return fmt.Errorf("failed to parse ip of agent: %s", err)
+				}
+
+				agent, err = s.signCSR(txn, agent, ip)
+				if err != nil {
+					return fmt.Errorf("failed to sign agent csr: %s", err)
+				}
+
+				agent, err = s.updateAgent(txn, agent)
+				if err != nil {
+					return fmt.Errorf("failed to update agent as part of renewing agent cerfiticate: %s", err)
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

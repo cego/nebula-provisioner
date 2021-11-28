@@ -343,13 +343,9 @@ func (s *Store) approveEnrollmentRequest(txn *badger.Txn, ipManager *IPManager, 
 	}
 
 	if enrolled {
-		i, n, err := net.ParseCIDR(agent.AssignedIP)
+		ip, err = assignedIPToIPNet(agent.AssignedIP)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse ip of existing agent: %s", err)
-		}
-		ip = &net.IPNet{
-			IP:   i,
-			Mask: n.Mask,
 		}
 	}
 
