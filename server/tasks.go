@@ -1,10 +1,11 @@
 package server
 
 import (
+	"time"
+
 	"github.com/sirupsen/logrus"
 	"github.com/slackhq/nebula"
 	"github.com/slyngdk/nebula-provisioner/server/store"
-	"time"
 )
 
 type tasks struct {
