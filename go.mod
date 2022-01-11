@@ -8,7 +8,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/sessions v1.2.1
-	github.com/hashicorp/vault v1.8.4
+	github.com/hashicorp/vault v1.8.5
 	github.com/lafriks/go-spaproxy v0.2.0
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/sirupsen/logrus v1.8.1
