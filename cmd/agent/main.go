@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/slackhq/nebula"
+	conf "github.com/slackhq/nebula/config"
 	"github.com/slyngdk/nebula-provisioner/protocol"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -40,7 +40,7 @@ var (
 	logLevel   string
 	configPath string
 	configDir  string
-	config     *nebula.Config
+	config     *conf.C
 
 	rootCmd = &cobra.Command{}
 )
@@ -68,7 +68,7 @@ func initConfig() {
 	l = logrus.New()
 	l.Out = os.Stdout
 
-	config = nebula.NewConfig(l)
+	config = conf.NewC(l)
 
 	if configPath == "" {
 		configPath = getConfigPath()
@@ -122,7 +122,7 @@ type agentClient struct {
 	client protocol.AgentServiceClient
 }
 
-func NewClient(l *logrus.Logger, config *nebula.Config) (*agentClient, error) {
+func NewClient(l *logrus.Logger, config *conf.C) (*agentClient, error) {
 
 	var opts []grpc.DialOption
 

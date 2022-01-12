@@ -22,7 +22,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
-	"github.com/slackhq/nebula"
+	"github.com/slackhq/nebula/config"
 	"github.com/slyngdk/nebula-provisioner/server/store"
 	"golang.org/x/oauth2"
 )
@@ -35,7 +35,7 @@ type frontend struct {
 	store        *store.Store
 	ipManager    *store.IPManager
 
-	config *nebula.Config
+	config *config.C
 	l      *logrus.Logger
 }
 
@@ -45,7 +45,7 @@ type userInfo struct {
 	email string
 }
 
-func NewFrontend(config *nebula.Config, logger *logrus.Logger, store *store.Store, ipManager *store.IPManager) (*frontend, error) {
+func NewFrontend(config *config.C, logger *logrus.Logger, store *store.Store, ipManager *store.IPManager) (*frontend, error) {
 
 	// Hash keys should be at least 32 bytes long
 	authenticationKey := make([]byte, 64)

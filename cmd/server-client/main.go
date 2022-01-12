@@ -5,14 +5,14 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
-	"github.com/slackhq/nebula"
+	conf "github.com/slackhq/nebula/config"
 	"github.com/spf13/cobra"
 )
 
 var (
 	l          *logrus.Logger
 	configPath string
-	config     *nebula.Config
+	config     *conf.C
 
 	rootCmd = &cobra.Command{}
 )
@@ -38,7 +38,7 @@ func init() {
 func initConfig() {
 	l = logrus.New()
 	l.Out = os.Stdout
-	config = nebula.NewConfig(l)
+	config = conf.NewC(l)
 	if configPath != "" {
 		err := config.Load(configPath)
 		if err != nil {
