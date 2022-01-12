@@ -56,6 +56,13 @@ type ComplexityRoot struct {
 		NetworkName func(childComplexity int) int
 	}
 
+	Ca struct {
+		ExpiresAt   func(childComplexity int) int
+		Fingerprint func(childComplexity int) int
+		IssuedAt    func(childComplexity int) int
+		Status      func(childComplexity int) int
+	}
+
 	EnrollmentRequest struct {
 		ClientIP    func(childComplexity int) int
 		Created     func(childComplexity int) int
@@ -71,11 +78,14 @@ type ComplexityRoot struct {
 		ApproveUser              func(childComplexity int, userID string) int
 		DeleteEnrollmentRequest  func(childComplexity int, fingerprint string) int
 		DisableUser              func(childComplexity int, userID string) int
+		PrepareNextCa            func(childComplexity int, networkName string) int
 		RevokeCertsForAgent      func(childComplexity int, fingerprint string) int
+		SwitchActiveCa           func(childComplexity int, networkName string) int
 	}
 
 	Network struct {
 		Agents             func(childComplexity int) int
+		Cas                func(childComplexity int) int
 		Duration           func(childComplexity int) int
 		EnrollmentRequests func(childComplexity int) int
 		EnrollmentToken    func(childComplexity int) int
@@ -116,11 +126,14 @@ type MutationResolver interface {
 	ApproveEnrollmentRequest(ctx context.Context, fingerprint string) (*model.Agent, error)
 	DeleteEnrollmentRequest(ctx context.Context, fingerprint string) (*bool, error)
 	RevokeCertsForAgent(ctx context.Context, fingerprint string) (*bool, error)
+	PrepareNextCa(ctx context.Context, networkName string) (*bool, error)
+	SwitchActiveCa(ctx context.Context, networkName string) (*bool, error)
 }
 type NetworkResolver interface {
 	Agents(ctx context.Context, obj *model.Network) ([]*model.Agent, error)
 	EnrollmentToken(ctx context.Context, obj *model.Network) (*string, error)
 	EnrollmentRequests(ctx context.Context, obj *model.Network) ([]*model.EnrollmentRequest, error)
+	Cas(ctx context.Context, obj *model.Network) ([]*model.Ca, error)
 }
 type QueryResolver interface {
 	CurrentUser(ctx context.Context) (*model.User, error)
@@ -203,6 +216,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Agent.NetworkName(childComplexity), true
+
+	case "CA.expiresAt":
+		if e.complexity.Ca.ExpiresAt == nil {
+			break
+		}
+
+		return e.complexity.Ca.ExpiresAt(childComplexity), true
+
+	case "CA.fingerprint":
+		if e.complexity.Ca.Fingerprint == nil {
+			break
+		}
+
+		return e.complexity.Ca.Fingerprint(childComplexity), true
+
+	case "CA.issuedAt":
+		if e.complexity.Ca.IssuedAt == nil {
+			break
+		}
+
+		return e.complexity.Ca.IssuedAt(childComplexity), true
+
+	case "CA.status":
+		if e.complexity.Ca.Status == nil {
+			break
+		}
+
+		return e.complexity.Ca.Status(childComplexity), true
 
 	case "EnrollmentRequest.clientIP":
 		if e.complexity.EnrollmentRequest.ClientIP == nil {
@@ -301,6 +342,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.DisableUser(childComplexity, args["userId"].(string)), true
 
+	case "Mutation.prepareNextCA":
+		if e.complexity.Mutation.PrepareNextCa == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_prepareNextCA_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.PrepareNextCa(childComplexity, args["networkName"].(string)), true
+
 	case "Mutation.revokeCertsForAgent":
 		if e.complexity.Mutation.RevokeCertsForAgent == nil {
 			break
@@ -313,12 +366,31 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.RevokeCertsForAgent(childComplexity, args["fingerprint"].(string)), true
 
+	case "Mutation.switchActiveCA":
+		if e.complexity.Mutation.SwitchActiveCa == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_switchActiveCA_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SwitchActiveCa(childComplexity, args["networkName"].(string)), true
+
 	case "Network.agents":
 		if e.complexity.Network.Agents == nil {
 			break
 		}
 
 		return e.complexity.Network.Agents(childComplexity), true
+
+	case "Network.cas":
+		if e.complexity.Network.Cas == nil {
+			break
+		}
+
+		return e.complexity.Network.Cas(childComplexity), true
 
 	case "Network.duration":
 		if e.complexity.Network.Duration == nil {
@@ -569,6 +641,20 @@ type EnrollmentRequest {
     groups: [String]
 }
 
+enum CAStatus {
+    active
+    expired
+    inactive
+    next
+}
+
+type CA {
+    fingerprint: String!
+    status: CAStatus!
+    issuedAt: String!
+    expiresAt: String!
+}
+
 type Network {
     name: String!
     duration: String
@@ -579,6 +665,7 @@ type Network {
     agents: [Agent]
     enrollmentToken: String
     enrollmentRequests: [EnrollmentRequest]
+    cas: [CA]
 }
 
 type User {
@@ -611,6 +698,8 @@ type Mutation {
     approveEnrollmentRequest(fingerprint: String!): Agent
     deleteEnrollmentRequest(fingerprint: String!): Boolean
     revokeCertsForAgent(fingerprint: String!): Boolean
+    prepareNextCA(networkName: String!): Boolean
+    switchActiveCA(networkName: String!): Boolean
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -679,6 +768,21 @@ func (ec *executionContext) field_Mutation_disableUser_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_prepareNextCA_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["networkName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["networkName"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_revokeCertsForAgent_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -691,6 +795,21 @@ func (ec *executionContext) field_Mutation_revokeCertsForAgent_args(ctx context.
 		}
 	}
 	args["fingerprint"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_switchActiveCA_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["networkName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("networkName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["networkName"] = arg0
 	return args, nil
 }
 
@@ -1040,6 +1159,146 @@ func (ec *executionContext) _Agent_name(ctx context.Context, field graphql.Colle
 	res := resTmp.(*string)
 	fc.Result = res
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CA_fingerprint(ctx context.Context, field graphql.CollectedField, obj *model.Ca) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CA",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Fingerprint, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CA_status(ctx context.Context, field graphql.CollectedField, obj *model.Ca) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CA",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.CAStatus)
+	fc.Result = res
+	return ec.marshalNCAStatus2githubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCAStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CA_issuedAt(ctx context.Context, field graphql.CollectedField, obj *model.Ca) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CA",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IssuedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CA_expiresAt(ctx context.Context, field graphql.CollectedField, obj *model.Ca) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CA",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ExpiresAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _EnrollmentRequest_fingerprint(ctx context.Context, field graphql.CollectedField, obj *model.EnrollmentRequest) (ret graphql.Marshaler) {
@@ -1470,6 +1729,84 @@ func (ec *executionContext) _Mutation_revokeCertsForAgent(ctx context.Context, f
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_prepareNextCA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_prepareNextCA_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().PrepareNextCa(rctx, args["networkName"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_switchActiveCA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_switchActiveCA_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SwitchActiveCa(rctx, args["networkName"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Network_name(ctx context.Context, field graphql.CollectedField, obj *model.Network) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1759,6 +2096,38 @@ func (ec *executionContext) _Network_enrollmentRequests(ctx context.Context, fie
 	res := resTmp.([]*model.EnrollmentRequest)
 	fc.Result = res
 	return ec.marshalOEnrollmentRequest2ᚕᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐEnrollmentRequest(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Network_cas(ctx context.Context, field graphql.CollectedField, obj *model.Network) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Network",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Network().Cas(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Ca)
+	fc.Result = res
+	return ec.marshalOCA2ᚕᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCa(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_currentUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3504,6 +3873,48 @@ func (ec *executionContext) _Agent(ctx context.Context, sel ast.SelectionSet, ob
 	return out
 }
 
+var cAImplementors = []string{"CA"}
+
+func (ec *executionContext) _CA(ctx context.Context, sel ast.SelectionSet, obj *model.Ca) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, cAImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CA")
+		case "fingerprint":
+			out.Values[i] = ec._CA_fingerprint(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "status":
+			out.Values[i] = ec._CA_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "issuedAt":
+			out.Values[i] = ec._CA_issuedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "expiresAt":
+			out.Values[i] = ec._CA_expiresAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var enrollmentRequestImplementors = []string{"EnrollmentRequest"}
 
 func (ec *executionContext) _EnrollmentRequest(ctx context.Context, sel ast.SelectionSet, obj *model.EnrollmentRequest) graphql.Marshaler {
@@ -3574,6 +3985,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_deleteEnrollmentRequest(ctx, field)
 		case "revokeCertsForAgent":
 			out.Values[i] = ec._Mutation_revokeCertsForAgent(ctx, field)
+		case "prepareNextCA":
+			out.Values[i] = ec._Mutation_prepareNextCA(ctx, field)
+		case "switchActiveCA":
+			out.Values[i] = ec._Mutation_switchActiveCA(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3642,6 +4057,17 @@ func (ec *executionContext) _Network(ctx context.Context, sel ast.SelectionSet, 
 					}
 				}()
 				res = ec._Network_enrollmentRequests(ctx, field, obj)
+				return res
+			})
+		case "cas":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Network_cas(ctx, field, obj)
 				return res
 			})
 		default:
@@ -4109,6 +4535,16 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNCAStatus2githubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCAStatus(ctx context.Context, v interface{}) (model.CAStatus, error) {
+	var res model.CAStatus
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCAStatus2githubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCAStatus(ctx context.Context, sel ast.SelectionSet, v model.CAStatus) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4570,6 +5006,54 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return graphql.MarshalBoolean(*v)
+}
+
+func (ec *executionContext) marshalOCA2ᚕᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCa(ctx context.Context, sel ast.SelectionSet, v []*model.Ca) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOCA2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCa(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOCA2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCa(ctx context.Context, sel ast.SelectionSet, v *model.Ca) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CA(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOEnrollmentRequest2ᚕᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐEnrollmentRequest(ctx context.Context, sel ast.SelectionSet, v []*model.EnrollmentRequest) graphql.Marshaler {

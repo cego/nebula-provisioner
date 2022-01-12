@@ -19,6 +19,20 @@ type EnrollmentRequest {
     groups: [String]
 }
 
+enum CAStatus {
+    active
+    expired
+    inactive
+    next
+}
+
+type CA {
+    fingerprint: String!
+    status: CAStatus!
+    issuedAt: String!
+    expiresAt: String!
+}
+
 type Network {
     name: String!
     duration: String
@@ -29,6 +43,7 @@ type Network {
     agents: [Agent]
     enrollmentToken: String
     enrollmentRequests: [EnrollmentRequest]
+    cas: [CA]
 }
 
 type User {
@@ -61,4 +76,6 @@ type Mutation {
     approveEnrollmentRequest(fingerprint: String!): Agent
     deleteEnrollmentRequest(fingerprint: String!): Boolean
     revokeCertsForAgent(fingerprint: String!): Boolean
+    prepareNextCA(networkName: String!): Boolean
+    switchActiveCA(networkName: String!): Boolean
 }

@@ -12,6 +12,14 @@ message CA {
   bytes publicKey = 10;
   bytes privateKey = 11;
   string sha256sum = 12;
+
+  enum Status {
+    Active = 0;
+    Expired = 1;
+    Inactive = 2;
+    Next = 3;
+  }
+  Status status = 20;
 }
 
 message EnrollmentToken {

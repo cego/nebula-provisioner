@@ -1,16 +1,12 @@
 package store
 
 import (
-	"crypto/ed25519"
-	"crypto/rand"
 	"fmt"
 	"net"
 	"strings"
-	"time"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/golang/protobuf/proto"
-	"github.com/slackhq/nebula/cert"
 	"github.com/slyngdk/nebula-provisioner/protocol"
 )
 
@@ -18,6 +14,10 @@ func (s *Store) ListNetworks() ([]*protocol.Network, error) {
 	txn := s.db.NewTransaction(false)
 	defer txn.Discard()
 
+	return s.listNetworks(txn)
+}
+
+func (s *Store) listNetworks(txn *badger.Txn) ([]*protocol.Network, error) {
 	opts := badger.DefaultIteratorOptions
 	opts.PrefetchSize = 10
 	opts.Prefix = prefix_network
@@ -110,80 +110,25 @@ func (s *Store) CreateNetwork(req *protocol.CreateNetworkRequest) (*protocol.Net
 
 	// Generate first CA for network
 
-	var ips []*net.IPNet
-	if len(req.Ips) != 0 {
-		for _, rs := range req.Ips {
-			rs := strings.Trim(rs, " ")
-			if rs != "" {
-				ip, ipNet, err := net.ParseCIDR(rs)
-				if err != nil {
-					return nil, fmt.Errorf("invalid ip definition: %s", err)
-				}
-
-				ipNet.IP = ip
-				ips = append(ips, ipNet)
-			}
-		}
-	}
-	var subnets []*net.IPNet
-	if len(req.Subnets) != 0 {
-		for _, rs := range req.Subnets {
-			rs := strings.Trim(rs, " ")
-			if rs != "" {
-				_, s, err := net.ParseCIDR(rs)
-				if err != nil {
-					return nil, fmt.Errorf("invalid subnet definition: %s", err)
-				}
-				subnets = append(subnets, s)
-			}
-		}
-	}
-
-	pub, rawPriv, err := ed25519.GenerateKey(rand.Reader)
+	ips, err := stringsToIPNet(req.Ips)
 	if err != nil {
-		return nil, fmt.Errorf("error while generating ed25519 keys: %s", err)
+		return nil, fmt.Errorf("invalid ip definition: %s", err)
 	}
 
-	duration := time.Hour * 24 * 365
-
-	nc := cert.NebulaCertificate{
-		Details: cert.NebulaCertificateDetails{
-			Name:      name,
-			Groups:    req.Groups,
-			Ips:       ips,
-			Subnets:   subnets,
-			NotBefore: time.Now(),
-			NotAfter:  time.Now().Add(duration),
-			PublicKey: pub,
-			IsCA:      true,
-		},
-	}
-
-	err = nc.Sign(rawPriv)
+	subnets, err := stringsToIPNet(req.Subnets)
 	if err != nil {
-		return nil, fmt.Errorf("error while signing: %s", err)
+		return nil, fmt.Errorf("invalid subnet definition: %s", err)
 	}
 
-	sum, err := nc.Sha256Sum()
+	ca, err := generateCA(name, req.Groups, ips, subnets, req.Duration.AsDuration())
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate CA: %s", err)
+	}
+
+	err = s.saveCA(txn, ca)
 	if err != nil {
 		return nil, err
 	}
-
-	key := cert.MarshalEd25519PrivateKey(rawPriv)
-	crt, err := nc.MarshalToPEM()
-
-	ca := &CA{NetworkName: name, PrivateKey: key, PublicKey: crt, Sha256Sum: sum}
-
-	caBytes, err := proto.Marshal(ca)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal network: %s", err)
-	}
-
-	err = txn.Set(append(prefix_ca, sum...), caBytes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to add ca: %s", err)
-	}
-
 	// DONE Generate first CA for network
 
 	_, err = s.generateEnrollmentToken(txn, name)
@@ -197,4 +142,21 @@ func (s *Store) CreateNetwork(req *protocol.CreateNetworkRequest) (*protocol.Net
 	}
 
 	return &protocol.Network{Name: name}, nil
+}
+
+func stringsToIPNet(s []string) ([]*net.IPNet, error) {
+	var nets []*net.IPNet
+	if len(s) != 0 {
+		for _, rs := range s {
+			rs := strings.Trim(rs, " ")
+			if rs != "" {
+				_, s, err := net.ParseCIDR(rs)
+				if err != nil {
+					return nil, fmt.Errorf("invalid cidr definition: %s", err)
+				}
+				nets = append(nets, s)
+			}
+		}
+	}
+	return nets, nil
 }

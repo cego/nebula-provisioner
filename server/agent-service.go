@@ -132,7 +132,7 @@ func (a *agentService) GetEnrollStatus(ctx context.Context, _ *emptypb.Empty) (*
 		if err != nil {
 			return nil, status.Error(codes.Internal, "Failed to get certificate authorities for network")
 		}
-		res.CertificateAuthorities = cas
+		res.CertificateAuthorities = caToProtocol(cas)
 
 		crl, err := a.store.ListCRLByNetwork([]string{agent.NetworkName})
 		if err != nil {
@@ -159,7 +159,7 @@ func (a *agentService) GetCertificateAuthorityByNetwork(ctx context.Context, req
 		return nil, status.Error(codes.Internal, fmt.Sprintf("%s", err))
 	}
 
-	return &protocol.GetCertificateAuthorityByNetworkResponse{CertificateAuthorities: cas}, nil
+	return &protocol.GetCertificateAuthorityByNetworkResponse{CertificateAuthorities: caToProtocol(cas)}, nil
 }
 
 func (a *agentService) GetCRLByNetwork(ctx context.Context, request *protocol.GetCRLByNetworkRequest) (*protocol.GetCRLByNetworkResponse, error) {
@@ -186,4 +186,19 @@ func (s *server) stopAgentService() error {
 		s.agentService.GracefulStop()
 	}
 	return nil
+}
+
+func caToProtocol(cas []*store.CA) []*protocol.CertificateAuthority {
+	var mCas []*protocol.CertificateAuthority
+
+	for _, ca := range cas {
+		c := &protocol.CertificateAuthority{
+			NetworkName:  ca.NetworkName,
+			Sha256Sum:    ca.Sha256Sum,
+			PublicKeyPEM: string(ca.PublicKey),
+		}
+		mCas = append(mCas, c)
+	}
+
+	return mCas
 }

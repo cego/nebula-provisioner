@@ -24,6 +24,7 @@ func (t *tasks) Start() {
 	t.l.Infoln("Starting task scheduler")
 
 	renewCertTicker := time.NewTicker(t.config.GetDuration("tasks.certRenew.interval", 1*time.Hour))
+	renewCATicker := time.NewTicker(t.config.GetDuration("tasks.caRenew.interval", 24*time.Hour))
 	dbGCTicker := time.NewTicker(t.config.GetDuration("tasks.dbGC.interval", 5*time.Minute))
 
 	go func() {
@@ -31,6 +32,8 @@ func (t *tasks) Start() {
 			select {
 			case <-renewCertTicker.C:
 				t.renewCerts()
+			case <-renewCATicker.C:
+				t.renewCAs()
 			case <-dbGCTicker.C:
 				t.dbGC()
 			case <-t.quit:
@@ -51,6 +54,14 @@ func (t *tasks) renewCerts() {
 	err := t.store.RenewCertForAgents()
 	if err != nil {
 		t.l.WithError(err).Errorln("error when renewing certificates for agents")
+	}
+}
+
+func (t *tasks) renewCAs() {
+	t.l.Infoln("Task: renew ca certificates")
+	err := t.store.RenewCAs()
+	if err != nil {
+		t.l.WithError(err).Errorln("error when renewing ca certificates")
 	}
 }
 
