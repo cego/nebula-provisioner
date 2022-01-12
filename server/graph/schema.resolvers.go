@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"time"
 
+	"github.com/slackhq/nebula/cert"
 	"github.com/slyngdk/nebula-provisioner/server/graph/generated"
 	"github.com/slyngdk/nebula-provisioner/server/graph/model"
 	"github.com/slyngdk/nebula-provisioner/server/store"
@@ -96,6 +97,34 @@ func (r *mutationResolver) RevokeCertsForAgent(ctx context.Context, fingerprint 
 	return nil, nil
 }
 
+func (r *mutationResolver) PrepareNextCa(ctx context.Context, networkName string) (*bool, error) {
+	if networkName == "" {
+		return nil, gqlerror.Errorf("networkName is required")
+	}
+
+	err := r.store.PrepareCARollover(networkName)
+	if err != nil {
+		r.l.WithError(err).Errorf("failed to prepare rollover of CA")
+		return nil, gqlerror.Errorf("failed to prepare rollover of CA")
+	}
+
+	return nil, nil
+}
+
+func (r *mutationResolver) SwitchActiveCa(ctx context.Context, networkName string) (*bool, error) {
+	if networkName == "" {
+		return nil, gqlerror.Errorf("networkName is required")
+	}
+
+	err := r.store.SwitchActiveCA(networkName)
+	if err != nil {
+		r.l.WithError(err).Errorf("failed to switch active CA")
+		return nil, gqlerror.Errorf("failed to switch active CA")
+	}
+
+	return nil, nil
+}
+
 func (r *networkResolver) Agents(ctx context.Context, obj *model.Network) ([]*model.Agent, error) {
 	if obj == nil {
 		return []*model.Agent{}, nil
@@ -154,6 +183,42 @@ func (r *networkResolver) EnrollmentRequests(ctx context.Context, obj *model.Net
 		}
 	}
 	return gEnrollmentRequests, nil
+}
+
+func (r *networkResolver) Cas(ctx context.Context, obj *model.Network) ([]*model.Ca, error) {
+	if obj == nil {
+		return []*model.Ca{}, nil
+	}
+
+	cas, err := r.store.ListCAByNetwork([]string{obj.Name})
+	if err != nil {
+		r.l.WithError(err).Errorf("failed to get ca`s for network: %s", obj.Name)
+		return nil, gqlerror.Errorf("failed to get ca`s for network: %s", obj.Name)
+	}
+
+	gCas := make([]*model.Ca, len(cas))
+	for i, ca := range cas {
+		publicKey, _, err := cert.UnmarshalNebulaCertificateFromPEM(ca.PublicKey)
+		if err != nil {
+			r.l.WithError(err).Error("failed to parse public key of ca")
+			return nil, gqlerror.Errorf("failed to parse public key of ca")
+		}
+
+		fingerprint, err := publicKey.Sha256Sum()
+		if err != nil {
+			r.l.WithError(err).Error("failed to get fingerprint of ca for network")
+			return nil, gqlerror.Errorf("failed to get fingerprint of ca")
+		}
+
+		gCas[i] = &model.Ca{
+			Fingerprint: fingerprint,
+			Status:      caStatusToModel(ca.Status),
+			IssuedAt:    publicKey.Details.NotBefore.Format(time.RFC3339),
+			ExpiresAt:   publicKey.Details.NotAfter.Format(time.RFC3339),
+		}
+	}
+
+	return gCas, nil
 }
 
 func (r *queryResolver) CurrentUser(ctx context.Context) (*model.User, error) {

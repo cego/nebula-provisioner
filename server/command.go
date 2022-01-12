@@ -164,7 +164,7 @@ func (c *commandServer) ListCertificateAuthorityByNetwork(_ context.Context, in 
 		return nil, status.Error(codes.Internal, fmt.Sprintf("%s", err))
 	}
 
-	return &protocol.ListCertificateAuthorityByNetworkResponse{CertificateAuthorities: cas}, nil
+	return &protocol.ListCertificateAuthorityByNetworkResponse{CertificateAuthorities: caToProtocol(cas)}, nil
 }
 
 func (c *commandServer) GetEnrollmentTokenForNetwork(_ context.Context, in *protocol.GetEnrollmentTokenForNetworkRequest) (*protocol.GetEnrollmentTokenForNetworkResponse, error) {

@@ -90,3 +90,16 @@ func networkToModel(n *protocol.Network) *model.Network {
 		IPPools: toPointerSliceString(n.IpPools),
 	}
 }
+
+func caStatusToModel(in store.CA_Status) model.CAStatus {
+	switch in {
+	case store.CA_Expired:
+		return model.CAStatusExpired
+	case store.CA_Inactive:
+		return model.CAStatusInactive
+	case store.CA_Next:
+		return model.CAStatusNext
+	default:
+		return model.CAStatusActive
+	}
+}

@@ -2,6 +2,12 @@
 
 package model
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
 type Agent struct {
 	Fingerprint string    `json:"fingerprint"`
 	Created     string    `json:"created"`
@@ -11,6 +17,13 @@ type Agent struct {
 	IssuedAt    *string   `json:"issuedAt"`
 	ExpiresAt   *string   `json:"expiresAt"`
 	Name        *string   `json:"name"`
+}
+
+type Ca struct {
+	Fingerprint string   `json:"fingerprint"`
+	Status      CAStatus `json:"status"`
+	IssuedAt    string   `json:"issuedAt"`
+	ExpiresAt   string   `json:"expiresAt"`
 }
 
 type EnrollmentRequest struct {
@@ -33,6 +46,7 @@ type Network struct {
 	Agents             []*Agent             `json:"agents"`
 	EnrollmentToken    *string              `json:"enrollmentToken"`
 	EnrollmentRequests []*EnrollmentRequest `json:"enrollmentRequests"`
+	Cas                []*Ca                `json:"cas"`
 }
 
 type User struct {
@@ -48,4 +62,49 @@ type UserApprove struct {
 	ApprovedBy     string `json:"approvedBy"`
 	ApprovedByUser *User  `json:"approvedByUser"`
 	ApprovedAt     string `json:"approvedAt"`
+}
+
+type CAStatus string
+
+const (
+	CAStatusActive   CAStatus = "active"
+	CAStatusExpired  CAStatus = "expired"
+	CAStatusInactive CAStatus = "inactive"
+	CAStatusNext     CAStatus = "next"
+)
+
+var AllCAStatus = []CAStatus{
+	CAStatusActive,
+	CAStatusExpired,
+	CAStatusInactive,
+	CAStatusNext,
+}
+
+func (e CAStatus) IsValid() bool {
+	switch e {
+	case CAStatusActive, CAStatusExpired, CAStatusInactive, CAStatusNext:
+		return true
+	}
+	return false
+}
+
+func (e CAStatus) String() string {
+	return string(e)
+}
+
+func (e *CAStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CAStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CAStatus", str)
+	}
+	return nil
+}
+
+func (e CAStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
