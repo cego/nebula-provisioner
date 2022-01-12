@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
-	"github.com/slackhq/nebula"
+	"github.com/slackhq/nebula/config"
 	"github.com/slyngdk/nebula-provisioner/server"
 )
 
@@ -43,7 +43,7 @@ func main() {
 	l := logrus.New()
 	l.Out = os.Stdout
 
-	config := nebula.NewConfig(l)
+	config := config.NewC(l)
 	err := config.Load(*configPath)
 	if err != nil {
 		fmt.Printf("failed to load config: %s", err)

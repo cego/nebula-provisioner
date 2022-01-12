@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/slackhq/nebula"
+	"github.com/slackhq/nebula/config"
 	"github.com/slyngdk/nebula-provisioner/protocol"
 	"github.com/slyngdk/nebula-provisioner/server/store"
 	"golang.org/x/crypto/acme/autocert"
@@ -18,7 +18,7 @@ import (
 
 type server struct {
 	l            *logrus.Logger
-	config       *nebula.Config
+	config       *config.C
 	buildVersion string
 	initialized  bool
 	store        *store.Store
@@ -28,7 +28,7 @@ type server struct {
 	tasks        *tasks
 }
 
-func Main(config *nebula.Config, buildVersion string, logger *logrus.Logger) (*Control, error) {
+func Main(config *config.C, buildVersion string, logger *logrus.Logger) (*Control, error) {
 	l := logger
 	l.Formatter = &logrus.TextFormatter{
 		FullTimestamp: true,

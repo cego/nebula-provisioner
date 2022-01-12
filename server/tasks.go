@@ -4,19 +4,19 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/slackhq/nebula"
+	"github.com/slackhq/nebula/config"
 	"github.com/slyngdk/nebula-provisioner/server/store"
 )
 
 type tasks struct {
-	config *nebula.Config
+	config *config.C
 	store  *store.Store
 
 	l    *logrus.Logger
 	quit chan interface{}
 }
 
-func NewTasks(l *logrus.Logger, config *nebula.Config, store *store.Store) *tasks {
+func NewTasks(l *logrus.Logger, config *config.C, store *store.Store) *tasks {
 	return &tasks{l: l, config: config, store: store, quit: make(chan interface{})}
 }
 

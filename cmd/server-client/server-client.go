@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/slackhq/nebula"
+	conf "github.com/slackhq/nebula/config"
 	"github.com/slyngdk/nebula-provisioner/protocol"
 	"google.golang.org/grpc"
 )
@@ -13,7 +13,7 @@ type serverClient struct {
 	client protocol.ServerCommandClient
 }
 
-func NewClient(config *nebula.Config) (*serverClient, error) {
+func NewClient(config *conf.C) (*serverClient, error) {
 
 	var opts []grpc.DialOption
 
