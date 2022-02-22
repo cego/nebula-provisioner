@@ -26,17 +26,20 @@ release: $(ALL:%=build/nebula-provisioner-%.tar.gz)
 release-linux: $(ALL_LINUX:%=build/nebula-provisioner-%.tar.gz)
 
 build/%/server: webapp .FORCE
-	GOOS=$(firstword $(subst -, , $*)) \
+	CGO_ENABLED=0 \
+			GOOS=$(firstword $(subst -, , $*)) \
     		GOARCH=$(word 2, $(subst -, ,$*)) $(GOENV) \
 			go build $(BUILD_ARGS) -o $@ -ldflags "$(LDFLAGS)" ${CMD_PATH}/server
 
 build/%/server-client: .FORCE
-	GOOS=$(firstword $(subst -, , $*)) \
+	CGO_ENABLED=0 \
+			GOOS=$(firstword $(subst -, , $*)) \
     		GOARCH=$(word 2, $(subst -, ,$*)) $(GOENV) \
 			go build $(BUILD_ARGS) -o $@ -ldflags "$(LDFLAGS)" ${CMD_PATH}/server-client
 
 build/%/agent: .FORCE
-	GOOS=$(firstword $(subst -, , $*)) \
+	CGO_ENABLED=0 \
+			GOOS=$(firstword $(subst -, , $*)) \
     		GOARCH=$(word 2, $(subst -, ,$*)) $(GOENV) \
 			go build $(BUILD_ARGS) -o $@ -ldflags "$(LDFLAGS)" ${CMD_PATH}/agent
 
@@ -52,7 +55,7 @@ dev: BUILD_TAGS=-tags dev
 dev: LDFLAGS=-X github.com/slyngdk/nebula-provisioner/webapp.Dir=$(CURDIR)/webapp/
 dev: bin
 
-protocol: protocol/models.pb.go protocol/agent-service.pb.go protocol/server-command.pb.go
+protocol: protocol/protocol.go protocol/models.proto protocol/agent-service.proto protocol/server-command.proto
 	go generate protocol/protocol.go
 
 server/store/store.pb.go: server/store/store.proto
