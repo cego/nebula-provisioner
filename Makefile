@@ -1,7 +1,6 @@
 BUILD_ARGS = -trimpath
 LDFLAGS = -X main.Build=$(BUILD_NUMBER)
 CMD_PATH = "./cmd/"
-GQLGEN_VERSION = v0.14.0
 # Set up OS specific bits
 ifeq ($(OS),Windows_NT)
 	GOVERSION := $(shell go version | awk "{print substr($$3, 3)}")
@@ -54,20 +53,10 @@ dev: LDFLAGS=-X github.com/slyngdk/nebula-provisioner/webapp.Dir=$(CURDIR)/webap
 dev: bin
 
 protocol: protocol/models.pb.go protocol/agent-service.pb.go protocol/server-command.pb.go
-
-protocol/models.pb.go: protocol/models.proto
-	$(MAKE) -C protocol models.pb.go
-
-protocol/agent-service.pb.go: protocol/agent-service.proto
-	$(MAKE) -C protocol agent-service.pb.go
-
-protocol/server-command.pb.go: protocol/server-command.proto
-	$(MAKE) -C protocol server-command.pb.go
+	go generate protocol/protocol.go
 
 server/store/store.pb.go: server/store/store.proto
-	GOBIN="$(CURDIR)" go install google.golang.org/protobuf/cmd/protoc-gen-go
-	PATH="$(CURDIR):$(PATH)" protoc --go_out=. --go_opt=paths=source_relative $<
-	rm protoc-gen-go
+	go generate server/store/store.go
 
 fmt:
 	go fmt ./...
@@ -79,10 +68,7 @@ test:
 	go test -v ./...
 
 impsort:
-	go get golang.org/x/tools/cmd/goimports
-	go build golang.org/x/tools/cmd/goimports
-	find . -iname '*.go' | grep -v '\.pb\.go$$' | xargs ./goimports -w
-	rm -f ./goimports
+	find . -iname '*.go' | grep -v '\.pb\.go$$' | xargs go run golang.org/x/tools/cmd/goimports -w
 
 WEBAPP_DIRS = $(shell find ./webapp/ -type d  | grep -vE 'webapp/(node_modules|dist)')
 WEBAPP_FILES = $(shell find ./webapp/ -type f -name '*' | grep -vE 'webapp/(node_modules|dist)')
@@ -91,8 +77,7 @@ webapp: ./webapp/ $(WEBAPP_DIRS) $(WEBAPP_FILES)
 	$(MAKE) -C webapp build
 
 server/graph/generated/generated.go: server/graph/schema.graphqls gqlgen.yml
-	go get github.com/99designs/gqlgen/cmd@$(GQLGEN_VERSION)
-	go run github.com/99designs/gqlgen generate
+	go generate server/graph/resolver.go
 
 .FORCE:
 .PHONY: test bin protocol dev
