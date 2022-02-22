@@ -1,5 +1,7 @@
 package store
 
+//go:generate protoc --go_out=. --go_opt=paths=source_relative store.proto
+
 import (
 	"bytes"
 	"crypto/rand"
