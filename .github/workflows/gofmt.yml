@@ -14,31 +14,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Set up Go 1.17
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.17
-      id: go
+      - name: Set up Go 1.17
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.17
+        id: go
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v1
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v1
 
-    - uses: actions/cache@v1
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-gofmt1.17-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-gofmt1.17-
+      - uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-gofmt1.17-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-gofmt1.17-
 
-    - name: Install goimports
-      run: |
-        go get golang.org/x/tools/cmd/goimports
-        go build golang.org/x/tools/cmd/goimports
-
-    - name: gofmt
-      run: |
-        if [ "$(find . -iname '*.go' | grep -v '\.pb\.go$' | xargs ./goimports -l)" ]
-        then
-          find . -iname '*.go' | grep -v '\.pb\.go$' | xargs ./goimports -d
-          exit 1
-        fi
+      - name: gofmt
+        run: |
+          if [ "$(find . -iname '*.go' | grep -v '\.pb\.go$' | xargs ./goimports -l)" ]
+          then
+            find . -iname '*.go' | grep -v '\.pb\.go$' | xargs go run golang.org/x/tools/cmd/goimports -d
+            exit 1
+          fi
