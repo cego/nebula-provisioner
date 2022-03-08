@@ -120,6 +120,7 @@ type agentClient struct {
 	l      *logrus.Logger
 	conn   *grpc.ClientConn
 	client protocol.AgentServiceClient
+	config *conf.C
 }
 
 func NewClient(l *logrus.Logger, config *conf.C) (*agentClient, error) {
@@ -186,7 +187,7 @@ func NewClient(l *logrus.Logger, config *conf.C) (*agentClient, error) {
 
 	client := protocol.NewAgentServiceClient(conn)
 
-	return &agentClient{l, conn, client}, nil
+	return &agentClient{l, conn, client, config}, nil
 }
 
 func (c agentClient) Close() error {
