@@ -129,6 +129,10 @@ func updateEnrollmentRequest(agent *agentClient, cmd *cobra.Command) {
 	if err != nil {
 		l.WithError(err).Fatalln("failed to get groups")
 	}
+	if len(groups) == 0 && agent.config.IsSet("enroll.groups") {
+		groups = agent.config.GetStringSlice("enroll.groups", []string{})
+	}
+
 	ip, err := cmd.Flags().GetString("ip")
 	if err != nil {
 		l.WithError(err).Fatalln("failed to get ip")
@@ -139,6 +143,16 @@ func updateEnrollmentRequest(agent *agentClient, cmd *cobra.Command) {
 			os.Exit(1)
 		}
 	}
+
+	if ip == "" && agent.config.IsSet("enroll.ip") {
+		ip = agent.config.GetString("enroll.ip", "")
+		parseIP := net.ParseIP(ip)
+		if parseIP == nil && ip != "" {
+			l.WithError(err).Fatalln("ip is of invalid format")
+			os.Exit(1)
+		}
+	}
+
 	hostname, err := os.Hostname()
 	if err != nil {
 		l.WithError(err).Errorln("error when getting hostname")
