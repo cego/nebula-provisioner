@@ -20,7 +20,7 @@
     "@angular/platform-browser-dynamic": "~13.2.6",
     "@angular/router": "~13.2.6",
     "@apollo/client": "^3.5.10",
-    "apollo-angular": "^3.0.0",
+    "apollo-angular": "^3.0.1",
     "graphql": "^16.3.0",
     "subsink": "^1.0.2",
     "rxjs": "~6.6.0",
