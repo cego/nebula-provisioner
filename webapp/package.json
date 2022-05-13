@@ -24,7 +24,7 @@
     "graphql": "^16.3.0",
     "subsink": "^1.0.2",
     "rxjs": "~6.6.0",
-    "tslib": "^2.3.0",
+    "tslib": "^2.4.0",
     "zone.js": "~0.11.4"
   },
   "devDependencies": {
