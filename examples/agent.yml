@@ -12,3 +12,6 @@
 service:
   config_template: nebula.yml.template
   config_output: nebula-generated
+#  port_mapping:
+#    enabled: true
+#    gateway: 192.168.56.101

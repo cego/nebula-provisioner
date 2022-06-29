@@ -9,6 +9,8 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/sessions v1.2.1
 	github.com/hashicorp/vault v1.9.4
+	github.com/jackpal/gateway v1.0.7
+	github.com/jackpal/go-nat-pmp v1.0.2
 	github.com/lafriks/go-spaproxy v0.2.0
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/sirupsen/logrus v1.8.1
