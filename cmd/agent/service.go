@@ -3,10 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/jackpal/gateway"
-	natpmp "github.com/jackpal/go-nat-pmp"
-	"github.com/pkg/errors"
-	conf "github.com/slackhq/nebula/config"
 	"io/ioutil"
 	"net"
 	"os"
@@ -16,6 +12,11 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/jackpal/gateway"
+	natpmp "github.com/jackpal/go-nat-pmp"
+	"github.com/pkg/errors"
+	conf "github.com/slackhq/nebula/config"
 
 	"github.com/mitchellh/go-ps"
 	"github.com/spf13/cobra"
