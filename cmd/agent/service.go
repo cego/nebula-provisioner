@@ -2,18 +2,32 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
+	"sync"
 	"syscall"
 	"time"
+
+	"github.com/jackpal/gateway"
+	natpmp "github.com/jackpal/go-nat-pmp"
+	"github.com/pkg/errors"
+	conf "github.com/slackhq/nebula/config"
 
 	"github.com/mitchellh/go-ps"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gopkg.in/yaml.v3"
 )
+
+var sighupCh = make(chan os.Signal, 1)
+var advertiseAddr = ""
+var advertiseAddrMutex = &sync.RWMutex{}
+var nebulaPort = 4242
 
 var serviceCmd = &cobra.Command{
 	Use:   "service",
@@ -35,25 +49,37 @@ var serviceCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		nebulaPort = getNebulaPort(templatePath)
+
 		interval := config.GetDuration("service.interval", 10*time.Minute)
 
 		ticker := time.NewTicker(interval)
-		sighup := make(chan os.Signal, 1)
-		signal.Notify(sighup, syscall.SIGHUP)
+		tickerPM := time.NewTicker(1 * time.Minute)
+
+		signal.Notify(sighupCh, syscall.SIGHUP)
 
 		quit := make(chan struct{})
 		go func() {
+			if config.GetBool("service.port_mapping.enabled", false) {
+				go natPMP(config)
+			}
 			run(agent, templatePath, outputPath)
 			for {
 				select {
-				case <-sighup:
+				case <-sighupCh:
 					l.Debug("received HUP signal, triggering update")
 					run(agent, templatePath, outputPath)
 				case <-ticker.C:
 					l.Debug("received tick, triggering update")
 					run(agent, templatePath, outputPath)
+				case <-tickerPM.C:
+					if config.GetBool("service.port_mapping.enabled", false) {
+						l.Debug("received tick for port mapping")
+						go natPMP(config)
+					}
 				case <-quit:
 					ticker.Stop()
+					tickerPM.Stop()
 					return
 				}
 			}
@@ -95,14 +121,11 @@ func run(agent *agentClient, configTemplatePath, outputPath string) {
 		return
 	}
 
-	var nebulaConfig map[interface{}]interface{}
-	bs, err := ioutil.ReadFile(configTemplatePath)
+	nebulaPort = getNebulaPort(configTemplatePath)
+
+	nebulaConfig, err := readNebulaTemplate(configTemplatePath)
 	if err != nil {
-		l.WithError(err).Errorf("failed to read template file")
-		return
-	}
-	if err := yaml.Unmarshal(bs, &nebulaConfig); err != nil {
-		l.WithError(err).Errorf("error when reading contents of %s", configTemplatePath)
+		l.WithError(err).Errorf("failed to read template")
 		return
 	}
 
@@ -205,7 +228,25 @@ func run(agent *agentClient, configTemplatePath, outputPath string) {
 
 	pki["blocklist"] = blockedFingerprints
 
-	bs, err = yaml.Marshal(nebulaConfig)
+	if _, ok := nebulaConfig["lighthouse"]; !ok {
+		nebulaConfig["lighthouse"] = make(map[string]interface{})
+	}
+	lh := nebulaConfig["lighthouse"].(map[string]interface{})
+
+	advertiseAddrMutex.RLock()
+	if advertiseAddr != "" {
+		if _, ok := lh["advertise_addrs"]; ok {
+			switch x := lh["advertise_addrs"].(type) {
+			case []string:
+				lh["advertise_addrs"] = append(x, advertiseAddr)
+			}
+		} else {
+			lh["advertise_addrs"] = []string{advertiseAddr}
+		}
+	}
+	advertiseAddrMutex.RUnlock()
+
+	bs, err := yaml.Marshal(nebulaConfig)
 	if err != nil {
 		l.WithError(err).Error("failed to generate config")
 		return
@@ -217,6 +258,39 @@ func run(agent *agentClient, configTemplatePath, outputPath string) {
 	}
 
 	reloadNebula()
+}
+
+func readNebulaTemplate(configTemplatePath string) (map[interface{}]interface{}, error) {
+	var nebulaConfig map[interface{}]interface{}
+	bs, err := ioutil.ReadFile(configTemplatePath)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read template file")
+	}
+	if err := yaml.Unmarshal(bs, &nebulaConfig); err != nil {
+		return nil, errors.Wrapf(err, "error when reading contents of %s", configTemplatePath)
+	}
+	return nebulaConfig, nil
+}
+
+func getNebulaPort(configTemplatePath string) int {
+	nebulaConfig, err := readNebulaTemplate(configTemplatePath)
+	if err != nil {
+		return 4242
+	}
+	if _, ok := nebulaConfig["listen"]; ok {
+		listen := nebulaConfig["listen"].(map[string]interface{})
+		if _, ok := listen["port"]; ok {
+			switch x := listen["port"].(type) {
+			case string:
+				port, err := strconv.Atoi(x)
+				if err != nil {
+					return 4242
+				}
+				return port
+			}
+		}
+	}
+	return 4242
 }
 
 func reloadNebula() {
@@ -235,5 +309,45 @@ func reloadNebula() {
 			}
 			break
 		}
+	}
+}
+
+func natPMP(config *conf.C) {
+	var gatewayIP net.IP
+	var err error
+
+	if config.IsSet("service.port_mapping.gateway") {
+		gw := config.GetString("service.port_mapping.gateway", "")
+		gatewayIP = net.ParseIP(gw)
+	} else {
+		gatewayIP, err = gateway.DiscoverGateway()
+		if err != nil {
+			return
+		}
+	}
+
+	client := natpmp.NewClient(gatewayIP)
+
+	addr, err := client.GetExternalAddress()
+	if err != nil {
+		return
+	}
+
+	portMapping, err := client.AddPortMapping("udp", nebulaPort, 0, 120)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		return
+	}
+	externalIP := net.IP(addr.ExternalIPAddress[:])
+
+	advertiseAddrNew := fmt.Sprintf("%s:%d", externalIP.String(), portMapping.MappedExternalPort)
+
+	advertiseAddrMutex.Lock()
+	defer advertiseAddrMutex.Unlock()
+
+	if advertiseAddr != advertiseAddrNew {
+		l.Debugf("advertiseAddr changed from %s -> %s", advertiseAddr, advertiseAddrNew)
+		advertiseAddr = advertiseAddrNew
+		sighupCh <- syscall.SIGHUP
 	}
 }
