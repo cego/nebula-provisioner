@@ -111,5 +111,7 @@
       }
     }
   },
-  "defaultProject": "nebula-provisioner"
+  "cli": {
+    "analytics": false
+  }
 }

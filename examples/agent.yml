@@ -15,3 +15,10 @@ service:
 #  port_mapping:
 #    enabled: true
 #    gateway: 192.168.56.101
+
+#enroll:
+#  groups: ["test"]
+#  ip: x.x.x.x
+#  port_mapping:
+#    enabled: true
+#    gateway: 192.168.56.101
