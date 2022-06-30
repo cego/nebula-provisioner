@@ -8,18 +8,18 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
+	"strconv"
 	"syscall"
 
-	spaproxy "github.com/lafriks/go-spaproxy"
+	"github.com/lafriks/go-spaproxy"
 	"github.com/sirupsen/logrus"
 )
 
 var Dir string
 
 func WebHandler(l *logrus.Logger) func(w http.ResponseWriter, r *http.Request) {
-	proxy, err := spaproxy.NewAngularDevProxy(&spaproxy.AngularDevProxyOptions{
-		Dir: Dir,
-	})
+	proxy, err := newAngularDevProxy()
 	if err != nil {
 		panic(err)
 	}
@@ -42,4 +42,26 @@ func WebHandler(l *logrus.Logger) func(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	return proxy.HandleFunc
+}
+
+func newAngularDevProxy() (spaproxy.SpaDevProxy, error) {
+	port, err := spaproxy.GetFreePort(0)
+	if err != nil {
+		return nil, err
+	}
+
+	args := make([]string, 0)
+	args = append(args, "--port", strconv.Itoa(port))
+	args = append(args, "--host", "localhost")
+	args = append(args, "--open", "false")
+
+	return spaproxy.NewSpaDevProxy(&spaproxy.SpaDevProxyOptions{
+		RunnerType:  spaproxy.RunnerTypeNpm,
+		ScriptName:  "start",
+		Dir:         Dir,
+		Env:         []string{},
+		Args:        args,
+		Port:        port,
+		StartRegexp: regexp.MustCompile("is listening on"),
+	})
 }

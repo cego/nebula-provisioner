@@ -23,15 +23,15 @@
     "apollo-angular": "^3.0.1",
     "graphql": "^16.5.0",
     "subsink": "^1.0.2",
-    "rxjs": "~6.6.0",
+    "rxjs": "~7.4.0",
     "tslib": "^2.4.0",
-    "zone.js": "~0.11.4"
+    "zone.js": "~0.11.6"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^14.0.4",
     "@angular/cli": "^14.0.4",
     "@angular/compiler-cli": "^14.0.4",
-    "@types/node": "^12.11.1",
+    "@types/node": "^16.11.42",
     "typescript": "~4.7.4"
   },
   "overrides": {
