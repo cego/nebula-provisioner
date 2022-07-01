@@ -28,7 +28,7 @@ var enrollCmd = &cobra.Command{
 		}
 		defer agent.Close()
 
-		updateEnrollmentRequest(agent, cmd)
+		updateEnrollmentRequest(agent, cmd, false)
 	},
 }
 
@@ -62,6 +62,38 @@ var enrollStatusCmd = &cobra.Command{
 	},
 }
 
+var enrollChangesCmd = &cobra.Command{
+	Use:   "changes",
+	Short: "Is there enrollment changes",
+	Run: func(cmd *cobra.Command, args []string) {
+		agent, err := NewClient(l, config)
+		if err != nil {
+			fmt.Printf("failed to create client: %s", err)
+			os.Exit(1)
+		}
+		defer agent.Close()
+
+		diff := updateEnrollmentRequest(agent, cmd, true)
+		if diff {
+			l.Info("Agent has changes to the enrollment")
+			os.Exit(2)
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		res, err := agent.client.GetEnrollStatus(ctx, &emptypb.Empty{})
+		if err != nil {
+			l.WithError(err).Fatalln("failed to get enrollment status")
+		}
+
+		if res.IsEnrollmentRequested {
+			l.Info("Agent has a waiting enrollment request")
+			os.Exit(3)
+		}
+	},
+}
+
 var enrollWaitCmd = &cobra.Command{
 	Use:   "wait",
 	Short: "Wait for enrollment",
@@ -76,7 +108,7 @@ var enrollWaitCmd = &cobra.Command{
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
 
-		updateEnrollmentRequest(agent, cmd)
+		updateEnrollmentRequest(agent, cmd, false)
 
 		if isEnrollDone(agent) {
 			return
@@ -102,12 +134,15 @@ func init() {
 	enrollWaitCmd.Flags().StringSliceP("groups", "g", []string{}, "Comma separated list of groups")
 	enrollWaitCmd.Flags().StringP("ip", "i", "", "Requesting for this specific nebula ip")
 	enrollWaitCmd.MarkFlagRequired("token")
+	enrollChangesCmd.Flags().StringP("token", "t", "", "Enrollment token")
+	enrollChangesCmd.Flags().StringSliceP("groups", "g", []string{}, "Comma separated list of groups")
+	enrollChangesCmd.Flags().StringP("ip", "i", "", "Requesting for this specific nebula ip")
+	enrollChangesCmd.MarkFlagRequired("token")
 
-	enrollCmd.AddCommand(enrollStatusCmd)
-	enrollCmd.AddCommand(enrollWaitCmd)
+	enrollCmd.AddCommand(enrollStatusCmd, enrollWaitCmd, enrollChangesCmd)
 }
 
-func updateEnrollmentRequest(agent *agentClient, cmd *cobra.Command) {
+func updateEnrollmentRequest(agent *agentClient, cmd *cobra.Command, dryRun bool) (diff bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -159,7 +194,7 @@ func updateEnrollmentRequest(agent *agentClient, cmd *cobra.Command) {
 		os.Exit(1)
 	}
 
-	var diff = false
+	diff = false
 
 	if status.EnrollmentRequest != nil {
 		l.Debug("comparing against existing enrollment request")
@@ -203,13 +238,15 @@ func updateEnrollmentRequest(agent *agentClient, cmd *cobra.Command) {
 		diff = true
 	}
 
-	if diff {
+	if diff && !dryRun {
 		l.Info("adding enrollment request")
 		if err := enroll(agent, token, ip, groups); err != nil {
 			l.WithError(err).Fatalln("failed to enroll agent")
 			os.Exit(2)
 		}
 	}
+
+	return diff
 }
 
 func isEnrollDone(agent *agentClient) bool {
