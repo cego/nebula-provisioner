@@ -3,7 +3,7 @@ module github.com/slyngdk/nebula-provisioner
 go 1.17
 
 require (
-	github.com/99designs/gqlgen v0.17.10
+	github.com/99designs/gqlgen v0.17.12
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/mux v1.8.0
@@ -17,7 +17,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/slackhq/nebula v1.6.0
 	github.com/spf13/cobra v1.4.0
-	github.com/vektah/gqlparser/v2 v2.4.5
+	github.com/vektah/gqlparser/v2 v2.4.6
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/tools v0.1.11
