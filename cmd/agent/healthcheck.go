@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/slackhq/nebula/cert"
-	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/slackhq/nebula/cert"
+	"github.com/spf13/cobra"
 )
 
 func init() {
