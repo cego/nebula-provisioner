@@ -15,6 +15,7 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
+// ApproveUser is the resolver for the approveUser field.
 func (r *mutationResolver) ApproveUser(ctx context.Context, userID string) (*model.User, error) {
 	if userID == "" {
 		return nil, gqlerror.Errorf("userId is required")
@@ -29,6 +30,7 @@ func (r *mutationResolver) ApproveUser(ctx context.Context, userID string) (*mod
 	return userToModel(user), nil
 }
 
+// DisableUser is the resolver for the disableUser field.
 func (r *mutationResolver) DisableUser(ctx context.Context, userID string) (*model.User, error) {
 	if userID == "" {
 		return nil, gqlerror.Errorf("userId is required")
@@ -42,6 +44,7 @@ func (r *mutationResolver) DisableUser(ctx context.Context, userID string) (*mod
 	return userToModel(user), nil
 }
 
+// ApproveEnrollmentRequest is the resolver for the approveEnrollmentRequest field.
 func (r *mutationResolver) ApproveEnrollmentRequest(ctx context.Context, fingerprint string) (*model.Agent, error) {
 	if fingerprint == "" {
 		return nil, gqlerror.Errorf("fingerprint is required")
@@ -61,6 +64,7 @@ func (r *mutationResolver) ApproveEnrollmentRequest(ctx context.Context, fingerp
 	return agentToModel(agent), nil
 }
 
+// DeleteEnrollmentRequest is the resolver for the deleteEnrollmentRequest field.
 func (r *mutationResolver) DeleteEnrollmentRequest(ctx context.Context, fingerprint string) (*bool, error) {
 	if fingerprint == "" {
 		return nil, gqlerror.Errorf("fingerprint is required")
@@ -80,6 +84,7 @@ func (r *mutationResolver) DeleteEnrollmentRequest(ctx context.Context, fingerpr
 	return nil, nil
 }
 
+// RevokeCertsForAgent is the resolver for the revokeCertsForAgent field.
 func (r *mutationResolver) RevokeCertsForAgent(ctx context.Context, fingerprint string) (*bool, error) {
 	if fingerprint == "" {
 		return nil, gqlerror.Errorf("fingerprint is required")
@@ -97,6 +102,7 @@ func (r *mutationResolver) RevokeCertsForAgent(ctx context.Context, fingerprint 
 	return nil, nil
 }
 
+// PrepareNextCa is the resolver for the prepareNextCA field.
 func (r *mutationResolver) PrepareNextCa(ctx context.Context, networkName string) (*bool, error) {
 	if networkName == "" {
 		return nil, gqlerror.Errorf("networkName is required")
@@ -111,6 +117,7 @@ func (r *mutationResolver) PrepareNextCa(ctx context.Context, networkName string
 	return nil, nil
 }
 
+// SwitchActiveCa is the resolver for the switchActiveCA field.
 func (r *mutationResolver) SwitchActiveCa(ctx context.Context, networkName string) (*bool, error) {
 	if networkName == "" {
 		return nil, gqlerror.Errorf("networkName is required")
@@ -125,6 +132,7 @@ func (r *mutationResolver) SwitchActiveCa(ctx context.Context, networkName strin
 	return nil, nil
 }
 
+// Agents is the resolver for the agents field.
 func (r *networkResolver) Agents(ctx context.Context, obj *model.Network) ([]*model.Agent, error) {
 	if obj == nil {
 		return []*model.Agent{}, nil
@@ -143,6 +151,7 @@ func (r *networkResolver) Agents(ctx context.Context, obj *model.Network) ([]*mo
 	return gAgent, nil
 }
 
+// EnrollmentToken is the resolver for the enrollmentToken field.
 func (r *networkResolver) EnrollmentToken(ctx context.Context, obj *model.Network) (*string, error) {
 	if obj == nil {
 		return nil, nil
@@ -157,6 +166,7 @@ func (r *networkResolver) EnrollmentToken(ctx context.Context, obj *model.Networ
 	return &et.Token, nil
 }
 
+// EnrollmentRequests is the resolver for the enrollmentRequests field.
 func (r *networkResolver) EnrollmentRequests(ctx context.Context, obj *model.Network) ([]*model.EnrollmentRequest, error) {
 	if obj == nil {
 		return []*model.EnrollmentRequest{}, nil
@@ -185,6 +195,7 @@ func (r *networkResolver) EnrollmentRequests(ctx context.Context, obj *model.Net
 	return gEnrollmentRequests, nil
 }
 
+// Cas is the resolver for the cas field.
 func (r *networkResolver) Cas(ctx context.Context, obj *model.Network) ([]*model.Ca, error) {
 	if obj == nil {
 		return []*model.Ca{}, nil
@@ -221,12 +232,14 @@ func (r *networkResolver) Cas(ctx context.Context, obj *model.Network) ([]*model
 	return gCas, nil
 }
 
+// CurrentUser is the resolver for the currentUser field.
 func (r *queryResolver) CurrentUser(ctx context.Context) (*model.User, error) {
 	user := UserFormContext(ctx)
 
 	return &user, nil
 }
 
+// GetUsers is the resolver for the getUsers field.
 func (r *queryResolver) GetUsers(ctx context.Context) ([]*model.User, error) {
 	users, err := r.store.ListUsers()
 	if err != nil {
@@ -243,6 +256,7 @@ func (r *queryResolver) GetUsers(ctx context.Context) ([]*model.User, error) {
 	return gUsers, nil
 }
 
+// GetNetworks is the resolver for the getNetworks field.
 func (r *queryResolver) GetNetworks(ctx context.Context) ([]*model.Network, error) {
 	networks, err := r.store.ListNetworks()
 	if err != nil {
@@ -259,6 +273,7 @@ func (r *queryResolver) GetNetworks(ctx context.Context) ([]*model.Network, erro
 	return gNetworks, nil
 }
 
+// GetNetwork is the resolver for the getNetwork field.
 func (r *queryResolver) GetNetwork(ctx context.Context, name string) (*model.Network, error) {
 	if name == "" {
 		return nil, gqlerror.Errorf("name is required")
@@ -273,6 +288,7 @@ func (r *queryResolver) GetNetwork(ctx context.Context, name string) (*model.Net
 	return networkToModel(network), nil
 }
 
+// GetAgent is the resolver for the getAgent field.
 func (r *queryResolver) GetAgent(ctx context.Context, fingerprint string) (*model.Agent, error) {
 	if fingerprint == "" {
 		return nil, gqlerror.Errorf("fingerprint is required")
@@ -297,6 +313,7 @@ func (r *queryResolver) GetAgent(ctx context.Context, fingerprint string) (*mode
 	return agentToModel(agent), nil
 }
 
+// ApprovedByUser is the resolver for the approvedByUser field.
 func (r *userApproveResolver) ApprovedByUser(ctx context.Context, obj *model.UserApprove) (*model.User, error) {
 	if obj == nil {
 		return nil, nil

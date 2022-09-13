@@ -12,7 +12,7 @@ import (
 
 // Build A version string that can be set with
 //
-//     -ldflags "-X main.Build=SOMEVERSION"
+//	-ldflags "-X main.Build=SOMEVERSION"
 //
 // at compile-time.
 var Build string
