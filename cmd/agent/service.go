@@ -169,9 +169,9 @@ func run(agent *agentClient, configTemplatePath, outputPath string) {
 		return
 	}
 
-	crtFilePath := filepath.Join(outputPath, "nebula.crt")
+	crtFilePath := filepath.Join(outputPath, NebulaCrtPath)
 	if err := ioutil.WriteFile(crtFilePath, []byte(status.SignedPEM), 0600); err != nil {
-		l.WithError(err).Errorf("failed to write nebula.crt to `%s`\n", crtFilePath)
+		l.WithError(err).Errorf("failed to write %s to `%s`\n", NebulaCrtPath, crtFilePath)
 		return
 	}
 	pki["cert"], err = filepath.Abs(crtFilePath)
@@ -196,7 +196,7 @@ func run(agent *agentClient, configTemplatePath, outputPath string) {
 		return
 	}
 
-	keyPathDst := filepath.Join(outputPath, "nebula.key")
+	keyPathDst := filepath.Join(outputPath, NebulaKeyPath)
 	if ok, info := fileExists(keyPathDst); ok && info.Mode() != 0600 {
 		l.Warnf("wrong permission on key %s, fixing...", keyPathDst)
 		err = os.Chmod(keyPathDst, 0600)
@@ -206,7 +206,7 @@ func run(agent *agentClient, configTemplatePath, outputPath string) {
 	}
 
 	if err := ioutil.WriteFile(keyPathDst, keyFileSource, 0600); err != nil {
-		l.WithError(err).Errorf("failed to write nebula.key to `%s`\n", keyPathDst)
+		l.WithError(err).Errorf("failed to write %s to `%s`\n", NebulaKeyPath, keyPathDst)
 		return
 	}
 

@@ -25,7 +25,7 @@ import (
 
 // Build A version string that can be set with
 //
-//     -ldflags "-X main.Build=SOMEVERSION"
+//	-ldflags "-X main.Build=SOMEVERSION"
 //
 // at compile-time.
 var Build string
@@ -34,6 +34,9 @@ const AgentNebulaCsrPath = "agent-nebula.csr"
 const AgentNebulaKeyPath = "agent-nebula.key"
 const AgentNebulaCrtPath = "agent-nebula.crt"
 const AgentNebulaCaPath = "agent-nebula-ca.crt"
+const NebulaCrtPath = "nebula.crt"
+const NebulaKeyPath = "nebula.key"
+const NebulaCaPath = "ca.crt"
 
 var (
 	l          *logrus.Logger
@@ -61,7 +64,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&configPath, "config", "c", "", "Path to either a file or directory to load configuration from")
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", logrus.InfoLevel.String(), "Log level (debug, info, warn, error, fatal, panic)")
 
-	rootCmd.AddCommand(enrollCmd, exportCmd, serviceCmd)
+	rootCmd.AddCommand(enrollCmd, exportCmd, serviceCmd, healthcheckCmd)
 }
 
 func initConfig() {
@@ -156,7 +159,7 @@ func NewClient(l *logrus.Logger, config *conf.C) (*agentClient, error) {
 
 	var caCertPool *x509.CertPool
 	if config.IsSet("pki.ca") {
-		ca := resolvePath(config.GetString("pki.ca", "ca.crt"))
+		ca := resolvePath(config.GetString("pki.ca", NebulaCaPath))
 		srvcert, err := ioutil.ReadFile(ca)
 		if err != nil {
 			return nil, fmt.Errorf("unable to load server cert pool: %v", err)
