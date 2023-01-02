@@ -15,6 +15,7 @@ service:
 #  port_mapping:
 #    enabled: true
 #    gateway: 192.168.56.101
+#    lifetime: 24h
 
 #enroll:
 #  groups: ["test"]
