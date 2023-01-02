@@ -333,7 +333,7 @@ func natPMP(config *conf.C) {
 		return
 	}
 
-	portMapping, err := client.AddPortMapping("udp", nebulaPort, 0, 120)
+	portMapping, err := client.AddPortMapping("udp", nebulaPort, 0, int(config.GetDuration("service.port_mapping.lifetime", 24*time.Hour).Seconds()))
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		return
