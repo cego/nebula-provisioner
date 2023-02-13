@@ -271,21 +271,26 @@ func (s *Store) RenewCAs() error {
 			return fmt.Errorf("failed to parse active CA %s", err)
 		}
 
-		// Ensure next is created if active expires in less than 30 days
-		if time.Now().Add(30*24*time.Hour).After(activePublicKey.Details.NotAfter) && next == nil {
+		// Ensure next is created if active expires in less than 60 days
+		if time.Now().Add(60*24*time.Hour).After(activePublicKey.Details.NotAfter) && next == nil {
 			next, err = s.prepareCARollover(txn, cas, network)
 			if err != nil {
 				return err
 			}
 		}
 
-		if time.Now().Add(14*24*time.Hour).After(activePublicKey.Details.NotAfter) && next != nil {
+		if time.Now().Add(45*24*time.Hour).After(activePublicKey.Details.NotAfter) && next != nil {
 			err = s.switchActiveCA(txn, cas, network.Name)
 			if err != nil {
 				return err
 			}
 		}
 
+	}
+
+	err = txn.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to commit RenewCAs: %v", err)
 	}
 
 	return nil
@@ -567,6 +572,9 @@ func generateCA(networkName string, groups []string, ips, subnets []*net.IPNet, 
 
 	key := cert.MarshalEd25519PrivateKey(rawPriv)
 	crt, err := nc.MarshalToPEM()
+	if err != nil {
+		return nil, err
+	}
 
 	ca := &CA{NetworkName: networkName, PrivateKey: key, PublicKey: crt, Sha256Sum: sum}
 
