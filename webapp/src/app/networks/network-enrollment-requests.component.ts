@@ -3,7 +3,7 @@ import {EnrollmentRequest, GET_NETWORK_BY_NAME} from "../models/network";
 import {ApolloResponse} from "../models/apollo";
 import {Apollo, gql} from "apollo-angular";
 import {SubSink} from "subsink";
-import {MatDialog} from "@angular/material/dialog";
+import {MatLegacyDialog as MatDialog} from "@angular/material/legacy-dialog";
 import {AlertService} from "../alert/alert.service";
 import {EnrollmentRequestApproveDialog} from "./enrollment-request-approve-dialog.component";
 

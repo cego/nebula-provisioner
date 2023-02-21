@@ -3,7 +3,7 @@ import {Agent} from "../models/agent";
 import {Apollo, gql} from "apollo-angular";
 import {SubSink} from "subsink";
 import {AlertService} from "../alert/alert.service";
-import {MAT_DIALOG_DATA, MatDialog} from "@angular/material/dialog";
+import {MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA, MatLegacyDialog as MatDialog} from "@angular/material/legacy-dialog";
 
 @Component({
     selector: 'app-network-agents',
