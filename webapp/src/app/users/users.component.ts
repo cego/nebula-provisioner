@@ -5,7 +5,7 @@ import {Apollo, gql} from "apollo-angular";
 import {ApolloResponse} from "../models/apollo";
 import {SubSink} from "subsink";
 import {User} from "../models/user";
-import {MAT_DIALOG_DATA, MatDialog} from "@angular/material/dialog";
+import {MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA, MatLegacyDialog as MatDialog} from "@angular/material/legacy-dialog";
 import {AlertService} from "../alert/alert.service";
 
 @Component({
