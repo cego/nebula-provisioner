@@ -3,7 +3,7 @@ module github.com/slyngdk/nebula-provisioner
 go 1.20
 
 require (
-	github.com/99designs/gqlgen v0.17.24
+	github.com/99designs/gqlgen v0.17.28
 	github.com/dgraph-io/badger/v3 v3.2103.5
 	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/mux v1.8.0
@@ -41,7 +41,7 @@ require (
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
-	github.com/hashicorp/golang-lru v0.5.4 // indirect
+	github.com/hashicorp/golang-lru/v2 v2.0.1 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
