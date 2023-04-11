@@ -42,6 +42,7 @@ var serviceCmd = &cobra.Command{
 
 		templatePath := config.GetString("service.config_template", "nebula.yml.template")
 		outputPath := config.GetString("service.config_output", "/etc/nebula/")
+		outputConfigFile := config.GetString("service.config_output_file", "config.yml")
 
 		templatePath = filepath.Join(configDir, templatePath)
 		if ok, _ := fileExists(templatePath); !ok {
@@ -63,15 +64,15 @@ var serviceCmd = &cobra.Command{
 			if config.GetBool("service.port_mapping.enabled", false) {
 				go natPMP(config)
 			}
-			run(agent, templatePath, outputPath)
+			run(agent, templatePath, outputPath, outputConfigFile)
 			for {
 				select {
 				case <-sighupCh:
 					l.Debug("received HUP signal, triggering update")
-					run(agent, templatePath, outputPath)
+					run(agent, templatePath, outputPath, outputConfigFile)
 				case <-ticker.C:
 					l.Debug("received tick, triggering update")
-					run(agent, templatePath, outputPath)
+					run(agent, templatePath, outputPath, outputConfigFile)
 				case <-tickerPM.C:
 					if config.GetBool("service.port_mapping.enabled", false) {
 						l.Debug("received tick for port mapping")
@@ -104,7 +105,7 @@ func serviceShutdownBlock() {
 	}
 }
 
-func run(agent *agentClient, configTemplatePath, outputPath string) {
+func run(agent *agentClient, configTemplatePath, outputPath, outputConfigFile string) {
 	l.Infoln("Generate config dir")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -251,7 +252,7 @@ func run(agent *agentClient, configTemplatePath, outputPath string) {
 		l.WithError(err).Error("failed to generate config")
 		return
 	}
-	configFilePath := filepath.Join(outputPath, "config.yml")
+	configFilePath := filepath.Join(outputPath, outputConfigFile)
 	if err := ioutil.WriteFile(configFilePath, bs, 0600); err != nil {
 		l.WithError(err).Errorf("failed to write config file to `%s`\n", configFilePath)
 		return
