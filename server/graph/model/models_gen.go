@@ -12,11 +12,11 @@ type Agent struct {
 	Fingerprint string    `json:"fingerprint"`
 	Created     string    `json:"created"`
 	NetworkName string    `json:"networkName"`
-	Groups      []*string `json:"groups"`
-	AssignedIP  *string   `json:"assignedIP"`
-	IssuedAt    *string   `json:"issuedAt"`
-	ExpiresAt   *string   `json:"expiresAt"`
-	Name        *string   `json:"name"`
+	Groups      []*string `json:"groups,omitempty"`
+	AssignedIP  *string   `json:"assignedIP,omitempty"`
+	IssuedAt    *string   `json:"issuedAt,omitempty"`
+	ExpiresAt   *string   `json:"expiresAt,omitempty"`
+	Name        *string   `json:"name,omitempty"`
 }
 
 type Ca struct {
@@ -30,37 +30,37 @@ type EnrollmentRequest struct {
 	Fingerprint string    `json:"fingerprint"`
 	Created     string    `json:"created"`
 	NetworkName string    `json:"networkName"`
-	ClientIP    *string   `json:"clientIP"`
-	Name        *string   `json:"name"`
-	RequestedIP *string   `json:"requestedIP"`
-	Groups      []*string `json:"groups"`
+	ClientIP    *string   `json:"clientIP,omitempty"`
+	Name        *string   `json:"name,omitempty"`
+	RequestedIP *string   `json:"requestedIP,omitempty"`
+	Groups      []*string `json:"groups,omitempty"`
 }
 
 type Network struct {
 	Name               string               `json:"name"`
-	Duration           *string              `json:"duration"`
-	Groups             []*string            `json:"groups"`
-	Ips                []*string            `json:"ips"`
-	Subnets            []*string            `json:"subnets"`
-	IPPools            []*string            `json:"ipPools"`
-	Agents             []*Agent             `json:"agents"`
-	EnrollmentToken    *string              `json:"enrollmentToken"`
-	EnrollmentRequests []*EnrollmentRequest `json:"enrollmentRequests"`
-	Cas                []*Ca                `json:"cas"`
+	Duration           *string              `json:"duration,omitempty"`
+	Groups             []*string            `json:"groups,omitempty"`
+	Ips                []*string            `json:"ips,omitempty"`
+	Subnets            []*string            `json:"subnets,omitempty"`
+	IPPools            []*string            `json:"ipPools,omitempty"`
+	Agents             []*Agent             `json:"agents,omitempty"`
+	EnrollmentToken    *string              `json:"enrollmentToken,omitempty"`
+	EnrollmentRequests []*EnrollmentRequest `json:"enrollmentRequests,omitempty"`
+	Cas                []*Ca                `json:"cas,omitempty"`
 }
 
 type User struct {
 	ID          string       `json:"id"`
 	Name        string       `json:"name"`
 	Email       string       `json:"email"`
-	UserApprove *UserApprove `json:"userApprove"`
+	UserApprove *UserApprove `json:"userApprove,omitempty"`
 	Disabled    bool         `json:"disabled"`
 }
 
 type UserApprove struct {
 	Approved       bool   `json:"approved"`
 	ApprovedBy     string `json:"approvedBy"`
-	ApprovedByUser *User  `json:"approvedByUser"`
+	ApprovedByUser *User  `json:"approvedByUser,omitempty"`
 	ApprovedAt     string `json:"approvedAt"`
 }
 
