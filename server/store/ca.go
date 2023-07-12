@@ -388,7 +388,7 @@ func (s *Store) signCSR(txn *badger.Txn, agent *Agent, ip *net.IPNet) (*Agent, e
 		return nil, fmt.Errorf("refusing to sign, root certificate constraints violated: %s", err)
 	}
 
-	err = nc.Sign(caKey)
+	err = nc.Sign(cert.Curve_CURVE25519, caKey)
 	if err != nil {
 		return nil, fmt.Errorf("error while signing: %s", err)
 	}
@@ -560,7 +560,7 @@ func generateCA(networkName string, groups []string, ips, subnets []*net.IPNet, 
 		},
 	}
 
-	err = nc.Sign(rawPriv)
+	err = nc.Sign(cert.Curve_CURVE25519, rawPriv)
 	if err != nil {
 		return nil, fmt.Errorf("error while signing: %s", err)
 	}
