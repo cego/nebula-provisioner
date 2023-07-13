@@ -31,7 +31,7 @@
     "@angular-devkit/build-angular": "^16.1.4",
     "@angular/cli": "^16.1.4",
     "@angular/compiler-cli": "^16.1.4",
-    "@types/node": "^20.4.1",
+    "@types/node": "^20.4.2",
     "typescript": "~5.1.6"
   }
 }
