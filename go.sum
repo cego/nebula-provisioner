@@ -94,8 +94,8 @@ github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/hashicorp/golang-lru/v2 v2.0.4 h1:7GHuZcgid37q8o5i3QI9KMT4nCWQQ3Kx3Ov6bb9MfK0=
 github.com/hashicorp/golang-lru/v2 v2.0.4/go.mod h1:QeFd9opnmA6QUJc5vARoKUSoFhyfM2/ZepoAG6RGpeM=
 github.com/hashicorp/hcl v1.0.0/go.mod h1:E5yfLk+7swimpb2L/Alb/PJmXilQ/rhwaUYs4T20WEQ=
-github.com/hashicorp/vault v1.14.0 h1:c+ujeY6SP/6xFF7dn1tfMhn5JPbRntX6lpIaoRUR6LM=
-github.com/hashicorp/vault v1.14.0/go.mod h1:bVRLXpE3TF0NgB/t2pJyox1n7dhtqbsZ5G19G0gpLRw=
+github.com/hashicorp/vault v1.14.1 h1:JBRe4N6g6iu3yWenhlMn9PwSNAQYIQQ6PTYnbccvyxM=
+github.com/hashicorp/vault v1.14.1/go.mod h1:VH1j4CD8lYPQ+XjmgpAF7gt0M2swsARFHndbDyDRgkU=
 github.com/imdario/mergo v0.3.16 h1:wwQJbIsHYGMUyLSPrEq1CT16AhnhNJQ51+4fdHUnCl4=
 github.com/imdario/mergo v0.3.16/go.mod h1:WBLT9ZmE3lPoWsEzCh9LPo3TiwVN+ZKEjmz+hD27ysY=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
