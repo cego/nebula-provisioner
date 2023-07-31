@@ -20,7 +20,7 @@ require (
 	github.com/vektah/gqlparser/v2 v2.5.6
 	golang.org/x/crypto v0.11.0
 	golang.org/x/oauth2 v0.10.0
-	golang.org/x/tools v0.11.0
+	golang.org/x/tools v0.11.1
 	google.golang.org/grpc v1.56.2
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
 	google.golang.org/protobuf v1.31.0
