@@ -3,7 +3,7 @@ import {EnrollmentRequest, GET_NETWORK_BY_NAME} from "../models/network";
 import {ApolloResponse} from "../models/apollo";
 import {Apollo, gql} from "apollo-angular";
 import {SubSink} from "subsink";
-import {MatLegacyDialog as MatDialog} from "@angular/material/legacy-dialog";
+import {MatDialog} from "@angular/material/dialog";
 import {AlertService} from "../alert/alert.service";
 import {EnrollmentRequestApproveDialog} from "./enrollment-request-approve-dialog.component";
 
@@ -35,12 +35,14 @@ import {EnrollmentRequestApproveDialog} from "./enrollment-request-approve-dialo
             <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef></th>
                 <td mat-cell *matCellDef="let er">
-                    <button mat-mini-fab color="primary" (click)="approveEnrollmentRequestDialog(er)">
-                        <mat-icon>done</mat-icon>
-                    </button>
-                    <button mat-mini-fab color="warn" (click)="deleteEnrollmentRequest(er)">
-                        <mat-icon>delete</mat-icon>
-                    </button>
+                    <div>
+                        <button mat-mini-fab color="primary" (click)="approveEnrollmentRequestDialog(er)">
+                            <mat-icon>done</mat-icon>
+                        </button>
+                        <button mat-mini-fab color="warn" (click)="deleteEnrollmentRequest(er)">
+                            <mat-icon>delete</mat-icon>
+                        </button>
+                    </div>
                 </td>
             </ng-container>
 
@@ -61,7 +63,7 @@ import {EnrollmentRequestApproveDialog} from "./enrollment-request-approve-dialo
       .mat-column-actions {
         padding-top: 0.5em;
         padding-bottom: 0.5em;
-        width: 10em;
+        width: 12em;
         text-align: right;
       }
     `],

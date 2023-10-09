@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, Inject, OnDestroy} from "@angular/core";
-import {MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA} from "@angular/material/legacy-dialog";
+import {MAT_DIALOG_DATA} from "@angular/material/dialog";
 import {EnrollmentRequest} from "../models/network";
 import {Agent, GET_AGENT_BY_CLIENT_FINGERPRINT} from "../models/agent";
 import {Apollo} from "apollo-angular";

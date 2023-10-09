@@ -1,21 +1,23 @@
-import {Component, Inject, Input, OnDestroy} from '@angular/core';
+import {AfterViewInit, Component, Inject, Input, OnDestroy, ViewChild} from '@angular/core';
 import {Agent} from "../models/agent";
 import {Apollo, gql} from "apollo-angular";
 import {SubSink} from "subsink";
 import {AlertService} from "../alert/alert.service";
-import {MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA, MatLegacyDialog as MatDialog} from "@angular/material/legacy-dialog";
+import {MAT_DIALOG_DATA, MatDialog} from "@angular/material/dialog";
+import {MatTableDataSource} from '@angular/material/table';
+import {MatSort} from "@angular/material/sort";
 
 @Component({
     selector: 'app-network-agents',
     template: `
-        <table mat-table [dataSource]="agents">
+        <table mat-table matSort matSortActive="name" matSortDirection="asc" [dataSource]="dataSource">
 
             <ng-container matColumnDef="created">
-                <th mat-header-cell *matHeaderCellDef> Created</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Created</th>
                 <td mat-cell *matCellDef="let agent"> {{agent.created}} </td>
             </ng-container>
             <ng-container matColumnDef="name">
-                <th mat-header-cell *matHeaderCellDef> Name</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Name</th>
                 <td mat-cell *matCellDef="let agent"> {{agent.name}} </td>
             </ng-container>
             <ng-container matColumnDef="groups">
@@ -23,7 +25,7 @@ import {MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA, MatLegacyDialog as MatDialog}
                 <td mat-cell *matCellDef="let agent"> {{agent.groups}} </td>
             </ng-container>
             <ng-container matColumnDef="assignedIP">
-                <th mat-header-cell *matHeaderCellDef> Nebula IP</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header> Nebula IP</th>
                 <td mat-cell *matCellDef="let agent"> {{agent.assignedIP}} </td>
             </ng-container>
             <ng-container matColumnDef="actions">
@@ -57,13 +59,28 @@ import {MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA, MatLegacyDialog as MatDialog}
       }
     `],
 })
-export class NetworkAgentsComponent implements OnDestroy {
+export class NetworkAgentsComponent implements AfterViewInit, OnDestroy {
     private subs = new SubSink();
-    agentDisplayedColumns: string[] = ['created', 'name', 'groups', 'assignedIP', 'actions'];
-    @Input() agents: Agent[] = [];
+    agentDisplayedColumns: string[] = ['name', 'groups', 'assignedIP', 'actions'];
+    dataSource: MatTableDataSource<Agent> = new MatTableDataSource<Agent>();
+    @ViewChild(MatSort) sort!: MatSort;
+
+    @Input()
+    public set agents(agents: Agent[]) {
+        this.dataSource.data = agents;
+    }
+
+    @Input()
+    public set filter(filter: string) {
+        this.dataSource.filter = filter;
+    }
 
     constructor(private apollo: Apollo, private dialog: MatDialog, private alert: AlertService) {
 
+    }
+
+    ngAfterViewInit() {
+        this.dataSource.sort = this.sort;
     }
 
     ngOnDestroy(): void {

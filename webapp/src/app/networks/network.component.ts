@@ -51,8 +51,15 @@ import {AlertService} from "../alert/alert.service";
 
         <div class="mat-elevation-z8 content-elm" *ngIf="agents.length > 0">
             <h1>Agents</h1>
+            <mat-form-field>
+                <mat-label>Search</mat-label>
+                <input matInput type="text" [(ngModel)]="filter">
+                <button *ngIf="filter" matSuffix mat-icon-button aria-label="Search" (click)="filter=''">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </mat-form-field>
 
-            <app-network-agents [agents]="agents"></app-network-agents>
+            <app-network-agents [agents]="agents" [filter]="filter"></app-network-agents>
         </div>
     `,
     styles: [`
@@ -62,7 +69,6 @@ import {AlertService} from "../alert/alert.service";
 
       mat-form-field {
         width: 100%;
-        margin: 1em;
       }
 
       .mat-column-actions {
@@ -77,9 +83,10 @@ export class NetworkComponent implements OnInit, OnDestroy {
 
     private subs = new SubSink();
 
-    network!: Network;
+    network?: Network;
     enrollmentRequests: EnrollmentRequest[] = [];
     agents: Agent[] = [];
+    filter = "";
 
     constructor(private apollo: Apollo, private route: ActivatedRoute, private alert: AlertService) {
 
