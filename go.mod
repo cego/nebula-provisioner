@@ -16,7 +16,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/slackhq/nebula v1.7.2
-	github.com/spf13/cobra v1.7.0
+	github.com/spf13/cobra v1.8.0
 	github.com/vektah/gqlparser/v2 v2.5.10
 	golang.org/x/crypto v0.14.0
 	golang.org/x/oauth2 v0.13.0
@@ -31,7 +31,7 @@ require (
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
 	github.com/dgraph-io/ristretto v0.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
