@@ -1,9 +1,7 @@
+name: Release
 on:
-  push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]*'
-
-name: Create release and upload binaries
+  release:
+    types: [ created ]
 
 jobs:
   build-linux:
@@ -62,47 +60,11 @@ jobs:
             )
           done | sort -k 2 >SHASUM256.txt
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-
-      ##
-      ## Upload assets (I wish we could just upload the whole folder at once...
-      ##
-
-      - name: Upload SHASUM256.txt
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./SHASUM256.txt
-          asset_name: SHASUM256.txt
-          asset_content_type: text/plain
-
-      - name: Upload linux-amd64
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./linux-latest/nebula-provisioner-linux-amd64.tar.gz
-          asset_name: nebula-provisioner-linux-amd64.tar.gz
-          asset_content_type: application/gzip
-
-      - name: Upload linux-386
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./linux-latest/nebula-provisioner-linux-386.tar.gz
-          asset_name: nebula-provisioner-linux-386.tar.gz
-          asset_content_type: application/gzip
+          files: |
+            ./linux-latest/**.tar.gz
+            SHASUM256.txt
+          fail_on_unmatched_files: true
