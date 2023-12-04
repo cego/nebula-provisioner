@@ -3,7 +3,7 @@ module github.com/slyngdk/nebula-provisioner
 go 1.21
 
 require (
-	github.com/99designs/gqlgen v0.17.40
+	github.com/99designs/gqlgen v0.17.41
 	github.com/dgraph-io/badger/v3 v3.2103.5
 	github.com/golang/protobuf v1.5.3
 	github.com/gorilla/mux v1.8.0
