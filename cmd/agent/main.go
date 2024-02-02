@@ -8,7 +8,6 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"math/big"
 	"os"
@@ -45,7 +44,9 @@ var (
 	configDir  string
 	config     *conf.C
 
-	rootCmd = &cobra.Command{}
+	rootCmd = &cobra.Command{
+		Version: Build,
+	}
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -160,7 +161,7 @@ func NewClient(l *logrus.Logger, config *conf.C) (*agentClient, error) {
 	var caCertPool *x509.CertPool
 	if config.IsSet("pki.ca") {
 		ca := resolvePath(config.GetString("pki.ca", NebulaCaPath))
-		srvcert, err := ioutil.ReadFile(ca)
+		srvcert, err := os.ReadFile(ca)
 		if err != nil {
 			return nil, fmt.Errorf("unable to load server cert pool: %v", err)
 		}
@@ -208,7 +209,7 @@ func generateAgentKeyPair(cert, key string) error {
 		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
 	}
 
-	err = ioutil.WriteFile(key, pem.EncodeToMemory(privateKeyBlock), 0600)
+	err = os.WriteFile(key, pem.EncodeToMemory(privateKeyBlock), 0600)
 	if err != nil {
 		return fmt.Errorf("error while writing %s: %s", key, err)
 	}
@@ -233,7 +234,7 @@ func generateAgentKeyPair(cert, key string) error {
 		Bytes: publicKeyBytes,
 	}
 
-	err = ioutil.WriteFile(cert, pem.EncodeToMemory(publicKeyBlock), 0600)
+	err = os.WriteFile(cert, pem.EncodeToMemory(publicKeyBlock), 0600)
 	if err != nil {
 		return fmt.Errorf("error while writing %s: %s", cert, err)
 	}
