@@ -1,5 +1,5 @@
 BUILD_ARGS = -trimpath
-LDFLAGS = -X main.Build=$(BUILD_NUMBER)
+LDFLAGS = -X main.Build=$(if $(BUILD_NUMBER),$(BUILD_NUMBER),"DEBUG")
 CMD_PATH = "./cmd/"
 # Set up OS specific bits
 ifeq ($(OS),Windows_NT)
