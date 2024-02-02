@@ -9,12 +9,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Build A version string that can be set with
+//
+//	-ldflags "-X main.Build=SOMEVERSION"
+//
+// at compile-time.
+var Build string
+
 var (
 	l          *logrus.Logger
 	configPath string
 	config     *conf.C
 
-	rootCmd = &cobra.Command{}
+	rootCmd = &cobra.Command{
+		Version: Build,
+	}
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.
