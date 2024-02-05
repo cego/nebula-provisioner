@@ -8,7 +8,7 @@ require (
 	github.com/golang/protobuf v1.5.3
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/sessions v1.2.2
-	github.com/hashicorp/vault v1.14.0
+	github.com/hashicorp/vault v1.15.5
 	github.com/jackpal/gateway v1.0.13
 	github.com/jackpal/go-nat-pmp v1.0.2
 	github.com/lafriks/go-spaproxy v0.2.0
@@ -29,12 +29,14 @@ require (
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
+	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dgraph-io/ristretto v0.1.1 // indirect
+	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.1.2 // indirect
