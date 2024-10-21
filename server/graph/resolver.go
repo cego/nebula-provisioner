@@ -7,11 +7,11 @@ import (
 	"encoding/hex"
 	"time"
 
+	"github.com/cego/nebula-provisioner/protocol"
+	"github.com/cego/nebula-provisioner/server/store"
 	"github.com/sirupsen/logrus"
-	"github.com/slyngdk/nebula-provisioner/protocol"
-	"github.com/slyngdk/nebula-provisioner/server/store"
 
-	"github.com/slyngdk/nebula-provisioner/server/graph/model"
+	"github.com/cego/nebula-provisioner/server/graph/model"
 )
 
 // This file will not be regenerated automatically.

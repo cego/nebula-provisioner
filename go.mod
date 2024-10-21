@@ -1,4 +1,4 @@
-module github.com/slyngdk/nebula-provisioner
+module github.com/cego/nebula-provisioner
 
 go 1.21
 

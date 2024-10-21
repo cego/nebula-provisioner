@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/slyngdk/nebula-provisioner/protocol";
+option go_package = "github.com/cego/nebula-provisioner/protocol";
 
 package protocol;
 

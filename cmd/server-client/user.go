@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/slyngdk/nebula-provisioner/protocol"
+	"github.com/cego/nebula-provisioner/protocol"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 

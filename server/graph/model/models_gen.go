@@ -36,6 +36,9 @@ type EnrollmentRequest struct {
 	Groups      []*string `json:"groups,omitempty"`
 }
 
+type Mutation struct {
+}
+
 type Network struct {
 	Name               string               `json:"name"`
 	Duration           *string              `json:"duration,omitempty"`
@@ -47,6 +50,9 @@ type Network struct {
 	EnrollmentToken    *string              `json:"enrollmentToken,omitempty"`
 	EnrollmentRequests []*EnrollmentRequest `json:"enrollmentRequests,omitempty"`
 	Cas                []*Ca                `json:"cas,omitempty"`
+}
+
+type Query struct {
 }
 
 type User struct {

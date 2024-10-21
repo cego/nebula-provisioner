@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/slyngdk/nebula-provisioner/protocol"
+	"github.com/cego/nebula-provisioner/protocol"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 )

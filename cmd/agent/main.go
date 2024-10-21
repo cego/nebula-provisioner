@@ -14,9 +14,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/cego/nebula-provisioner/protocol"
 	"github.com/sirupsen/logrus"
 	conf "github.com/slackhq/nebula/config"
-	"github.com/slyngdk/nebula-provisioner/protocol"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"

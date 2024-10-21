@@ -4,7 +4,7 @@ import "models.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/slyngdk/nebula-provisioner/protocol";
+option go_package = "github.com/cego/nebula-provisioner/protocol";
 
 package protocol;
 

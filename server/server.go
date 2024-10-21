@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cego/nebula-provisioner/protocol"
+	"github.com/cego/nebula-provisioner/server/store"
 	"github.com/sirupsen/logrus"
 	"github.com/slackhq/nebula/config"
-	"github.com/slyngdk/nebula-provisioner/protocol"
-	"github.com/slyngdk/nebula-provisioner/server/store"
 	"golang.org/x/crypto/acme/autocert"
 	"google.golang.org/grpc"
 )
@@ -51,7 +51,7 @@ func (s *server) start() error {
 		return fmt.Errorf("%s is not a directory", dataDir)
 	}
 
-	encryptionEnabled := !(s.buildVersion == "" && !s.config.GetBool("db.encrypted", true))
+	encryptionEnabled := !(s.buildVersion == "DEBUG" && !s.config.GetBool("db.encrypted", true))
 
 	st, err := store.NewStore(s.l, dataDir, unsealed, encryptionEnabled)
 	if err != nil {

@@ -3,9 +3,9 @@ package server
 import (
 	"time"
 
+	"github.com/cego/nebula-provisioner/server/store"
 	"github.com/sirupsen/logrus"
 	"github.com/slackhq/nebula/config"
-	"github.com/slyngdk/nebula-provisioner/server/store"
 )
 
 type tasks struct {

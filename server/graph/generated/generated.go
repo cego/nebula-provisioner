@@ -13,7 +13,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/slyngdk/nebula-provisioner/server/graph/model"
+	"github.com/cego/nebula-provisioner/server/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -1352,7 +1352,7 @@ func (ec *executionContext) _CA_status(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(model.CAStatus)
 	fc.Result = res
-	return ec.marshalNCAStatus2githubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCAStatus(ctx, field.Selections, res)
+	return ec.marshalNCAStatus2githubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCAStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CA_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1777,7 +1777,7 @@ func (ec *executionContext) _Mutation_approveUser(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_approveUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1841,7 +1841,7 @@ func (ec *executionContext) _Mutation_disableUser(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_disableUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1905,7 +1905,7 @@ func (ec *executionContext) _Mutation_approveEnrollmentRequest(ctx context.Conte
 	}
 	res := resTmp.(*model.Agent)
 	fc.Result = res
-	return ec.marshalOAgent2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐAgent(ctx, field.Selections, res)
+	return ec.marshalOAgent2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐAgent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_approveEnrollmentRequest(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2432,7 +2432,7 @@ func (ec *executionContext) _Network_agents(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*model.Agent)
 	fc.Result = res
-	return ec.marshalOAgent2ᚕᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐAgent(ctx, field.Selections, res)
+	return ec.marshalOAgent2ᚕᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐAgent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Network_agents(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2532,7 +2532,7 @@ func (ec *executionContext) _Network_enrollmentRequests(ctx context.Context, fie
 	}
 	res := resTmp.([]*model.EnrollmentRequest)
 	fc.Result = res
-	return ec.marshalOEnrollmentRequest2ᚕᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐEnrollmentRequest(ctx, field.Selections, res)
+	return ec.marshalOEnrollmentRequest2ᚕᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐEnrollmentRequest(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Network_enrollmentRequests(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2589,7 +2589,7 @@ func (ec *executionContext) _Network_cas(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.Ca)
 	fc.Result = res
-	return ec.marshalOCA2ᚕᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCa(ctx, field.Selections, res)
+	return ec.marshalOCA2ᚕᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCa(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Network_cas(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2643,7 +2643,7 @@ func (ec *executionContext) _Query_currentUser(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_currentUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2699,7 +2699,7 @@ func (ec *executionContext) _Query_getUsers(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getUsers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2755,7 +2755,7 @@ func (ec *executionContext) _Query_getNetworks(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.Network)
 	fc.Result = res
-	return ec.marshalNNetwork2ᚕᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐNetwork(ctx, field.Selections, res)
+	return ec.marshalNNetwork2ᚕᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐNetwork(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getNetworks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2821,7 +2821,7 @@ func (ec *executionContext) _Query_getNetwork(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.Network)
 	fc.Result = res
-	return ec.marshalNNetwork2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐNetwork(ctx, field.Selections, res)
+	return ec.marshalNNetwork2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐNetwork(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getNetwork(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2895,7 +2895,7 @@ func (ec *executionContext) _Query_getAgent(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.Agent)
 	fc.Result = res
-	return ec.marshalOAgent2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐAgent(ctx, field.Selections, res)
+	return ec.marshalOAgent2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐAgent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getAgent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3226,7 +3226,7 @@ func (ec *executionContext) _User_userApprove(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.UserApprove)
 	fc.Result = res
-	return ec.marshalOUserApprove2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUserApprove(ctx, field.Selections, res)
+	return ec.marshalOUserApprove2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUserApprove(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_userApprove(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3409,7 +3409,7 @@ func (ec *executionContext) _UserApprove_approvedByUser(ctx context.Context, fie
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UserApprove_approvedByUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6319,13 +6319,13 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNCAStatus2githubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCAStatus(ctx context.Context, v interface{}) (model.CAStatus, error) {
+func (ec *executionContext) unmarshalNCAStatus2githubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCAStatus(ctx context.Context, v interface{}) (model.CAStatus, error) {
 	var res model.CAStatus
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCAStatus2githubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCAStatus(ctx context.Context, sel ast.SelectionSet, v model.CAStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNCAStatus2githubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCAStatus(ctx context.Context, sel ast.SelectionSet, v model.CAStatus) graphql.Marshaler {
 	return v
 }
 
@@ -6344,11 +6344,11 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) marshalNNetwork2githubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐNetwork(ctx context.Context, sel ast.SelectionSet, v model.Network) graphql.Marshaler {
+func (ec *executionContext) marshalNNetwork2githubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐNetwork(ctx context.Context, sel ast.SelectionSet, v model.Network) graphql.Marshaler {
 	return ec._Network(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNNetwork2ᚕᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐNetwork(ctx context.Context, sel ast.SelectionSet, v []*model.Network) graphql.Marshaler {
+func (ec *executionContext) marshalNNetwork2ᚕᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐNetwork(ctx context.Context, sel ast.SelectionSet, v []*model.Network) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6372,7 +6372,7 @@ func (ec *executionContext) marshalNNetwork2ᚕᚖgithubᚗcomᚋslyngdkᚋnebul
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalONetwork2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐNetwork(ctx, sel, v[i])
+			ret[i] = ec.marshalONetwork2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐNetwork(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6386,7 +6386,7 @@ func (ec *executionContext) marshalNNetwork2ᚕᚖgithubᚗcomᚋslyngdkᚋnebul
 	return ret
 }
 
-func (ec *executionContext) marshalNNetwork2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐNetwork(ctx context.Context, sel ast.SelectionSet, v *model.Network) graphql.Marshaler {
+func (ec *executionContext) marshalNNetwork2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐNetwork(ctx context.Context, sel ast.SelectionSet, v *model.Network) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6411,11 +6411,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6439,7 +6439,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋslyngdkᚋnebula�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6453,7 +6453,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋslyngdkᚋnebula�
 	return ret
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6716,7 +6716,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) marshalOAgent2ᚕᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐAgent(ctx context.Context, sel ast.SelectionSet, v []*model.Agent) graphql.Marshaler {
+func (ec *executionContext) marshalOAgent2ᚕᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐAgent(ctx context.Context, sel ast.SelectionSet, v []*model.Agent) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6743,7 +6743,7 @@ func (ec *executionContext) marshalOAgent2ᚕᚖgithubᚗcomᚋslyngdkᚋnebula�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOAgent2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐAgent(ctx, sel, v[i])
+			ret[i] = ec.marshalOAgent2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐAgent(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6757,7 +6757,7 @@ func (ec *executionContext) marshalOAgent2ᚕᚖgithubᚗcomᚋslyngdkᚋnebula�
 	return ret
 }
 
-func (ec *executionContext) marshalOAgent2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐAgent(ctx context.Context, sel ast.SelectionSet, v *model.Agent) graphql.Marshaler {
+func (ec *executionContext) marshalOAgent2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐAgent(ctx context.Context, sel ast.SelectionSet, v *model.Agent) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6790,7 +6790,7 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOCA2ᚕᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCa(ctx context.Context, sel ast.SelectionSet, v []*model.Ca) graphql.Marshaler {
+func (ec *executionContext) marshalOCA2ᚕᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCa(ctx context.Context, sel ast.SelectionSet, v []*model.Ca) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6817,7 +6817,7 @@ func (ec *executionContext) marshalOCA2ᚕᚖgithubᚗcomᚋslyngdkᚋnebulaᚑp
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOCA2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCa(ctx, sel, v[i])
+			ret[i] = ec.marshalOCA2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCa(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6831,14 +6831,14 @@ func (ec *executionContext) marshalOCA2ᚕᚖgithubᚗcomᚋslyngdkᚋnebulaᚑp
 	return ret
 }
 
-func (ec *executionContext) marshalOCA2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCa(ctx context.Context, sel ast.SelectionSet, v *model.Ca) graphql.Marshaler {
+func (ec *executionContext) marshalOCA2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐCa(ctx context.Context, sel ast.SelectionSet, v *model.Ca) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CA(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOEnrollmentRequest2ᚕᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐEnrollmentRequest(ctx context.Context, sel ast.SelectionSet, v []*model.EnrollmentRequest) graphql.Marshaler {
+func (ec *executionContext) marshalOEnrollmentRequest2ᚕᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐEnrollmentRequest(ctx context.Context, sel ast.SelectionSet, v []*model.EnrollmentRequest) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6865,7 +6865,7 @@ func (ec *executionContext) marshalOEnrollmentRequest2ᚕᚖgithubᚗcomᚋslyng
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOEnrollmentRequest2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐEnrollmentRequest(ctx, sel, v[i])
+			ret[i] = ec.marshalOEnrollmentRequest2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐEnrollmentRequest(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6879,14 +6879,14 @@ func (ec *executionContext) marshalOEnrollmentRequest2ᚕᚖgithubᚗcomᚋslyng
 	return ret
 }
 
-func (ec *executionContext) marshalOEnrollmentRequest2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐEnrollmentRequest(ctx context.Context, sel ast.SelectionSet, v *model.EnrollmentRequest) graphql.Marshaler {
+func (ec *executionContext) marshalOEnrollmentRequest2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐEnrollmentRequest(ctx context.Context, sel ast.SelectionSet, v *model.EnrollmentRequest) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._EnrollmentRequest(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalONetwork2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐNetwork(ctx context.Context, sel ast.SelectionSet, v *model.Network) graphql.Marshaler {
+func (ec *executionContext) marshalONetwork2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐNetwork(ctx context.Context, sel ast.SelectionSet, v *model.Network) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6941,14 +6941,14 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserApprove2ᚖgithubᚗcomᚋslyngdkᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUserApprove(ctx context.Context, sel ast.SelectionSet, v *model.UserApprove) graphql.Marshaler {
+func (ec *executionContext) marshalOUserApprove2ᚖgithubᚗcomᚋcegoᚋnebulaᚑprovisionerᚋserverᚋgraphᚋmodelᚐUserApprove(ctx context.Context, sel ast.SelectionSet, v *model.UserApprove) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
