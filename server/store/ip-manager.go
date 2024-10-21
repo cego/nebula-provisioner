@@ -5,7 +5,7 @@ import (
 	"net"
 	"sync"
 
-	"github.com/slyngdk/nebula-provisioner/protocol"
+	"github.com/cego/nebula-provisioner/protocol"
 
 	"github.com/sirupsen/logrus"
 )

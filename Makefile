@@ -52,7 +52,7 @@ bin: protocol server/store/store.pb.go server/graph/generated/generated.go webap
 	go build $(BUILD_ARGS) -ldflags "$(LDFLAGS)" $(BUILD_TAGS) -o ./bin/agent${CMD_SUFFIX} ${CMD_PATH}/agent
 
 dev: BUILD_TAGS=-tags dev
-dev: LDFLAGS=-X github.com/slyngdk/nebula-provisioner/webapp.Dir=$(CURDIR)/webapp/
+dev: LDFLAGS=-X github.com/cego/nebula-provisioner/webapp.Dir=$(CURDIR)/webapp/
 dev: bin
 
 protocol: protocol/protocol.go protocol/models.proto protocol/agent-service.proto protocol/server-command.proto

@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/cego/nebula-provisioner/protocol"
 	conf "github.com/slackhq/nebula/config"
-	"github.com/slyngdk/nebula-provisioner/protocol"
 	"google.golang.org/grpc"
 )
 

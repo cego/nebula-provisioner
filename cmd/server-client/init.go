@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/cego/nebula-provisioner/protocol"
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/slyngdk/nebula-provisioner/protocol"
 	"github.com/spf13/cobra"
 )
 

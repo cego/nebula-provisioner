@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/slyngdk/nebula-provisioner/server/store";
+option go_package = "github.com/cego/nebula-provisioner/server/store";
 
 package store;
 

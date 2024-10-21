@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cego/nebula-provisioner/server"
 	"github.com/sirupsen/logrus"
 	"github.com/slackhq/nebula/config"
-	"github.com/slyngdk/nebula-provisioner/server"
 )
 
 // Build A version string that can be set with

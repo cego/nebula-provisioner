@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/cego/nebula-provisioner/protocol"
+	"github.com/cego/nebula-provisioner/server/store"
 	"github.com/sirupsen/logrus"
-	"github.com/slyngdk/nebula-provisioner/protocol"
-	"github.com/slyngdk/nebula-provisioner/server/store"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

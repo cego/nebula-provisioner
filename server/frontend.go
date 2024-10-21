@@ -12,18 +12,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/slyngdk/nebula-provisioner/server/graph/model"
-	"github.com/slyngdk/nebula-provisioner/webapp"
+	"github.com/cego/nebula-provisioner/server/graph/model"
+	"github.com/cego/nebula-provisioner/webapp"
 
 	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/slyngdk/nebula-provisioner/server/graph"
-	"github.com/slyngdk/nebula-provisioner/server/graph/generated"
+	"github.com/cego/nebula-provisioner/server/graph"
+	"github.com/cego/nebula-provisioner/server/graph/generated"
 
+	"github.com/cego/nebula-provisioner/server/store"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 	"github.com/slackhq/nebula/config"
-	"github.com/slyngdk/nebula-provisioner/server/store"
 	"golang.org/x/oauth2"
 )
 

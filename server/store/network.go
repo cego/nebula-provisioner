@@ -5,9 +5,9 @@ import (
 	"net"
 	"strings"
 
+	"github.com/cego/nebula-provisioner/protocol"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/golang/protobuf/proto"
-	"github.com/slyngdk/nebula-provisioner/protocol"
 )
 
 func (s *Store) ListNetworks() ([]*protocol.Network, error) {
