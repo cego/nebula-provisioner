@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/cego/nebula-provisioner/protocol"
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 var initCmd = &cobra.Command{
@@ -51,7 +51,7 @@ func isInit(c *serverClient) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	response, err := c.client.IsInit(ctx, &empty.Empty{})
+	response, err := c.client.IsInit(ctx, &emptypb.Empty{})
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func initServer(c *serverClient) error {
 
 	ctx, cancelCheck := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancelCheck()
-	isInitRes, err := c.client.IsInit(ctx, &empty.Empty{})
+	isInitRes, err := c.client.IsInit(ctx, &emptypb.Empty{})
 	if err != nil {
 		return err
 	}

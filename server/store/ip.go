@@ -6,8 +6,8 @@ import (
 	"sync"
 
 	"github.com/dgraph-io/badger/v3"
-	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/proto"
 )
 
 var usableIPBlocks []*net.IPNet

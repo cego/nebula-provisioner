@@ -10,8 +10,8 @@ import (
 
 	"github.com/cego/nebula-provisioner/protocol"
 	"github.com/dgraph-io/badger/v3"
-	"github.com/golang/protobuf/proto"
 	"github.com/slackhq/nebula/cert"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
