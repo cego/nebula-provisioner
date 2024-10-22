@@ -7,7 +7,7 @@ import (
 
 	"github.com/cego/nebula-provisioner/protocol"
 	"github.com/dgraph-io/badger/v3"
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 func (s *Store) ListNetworks() ([]*protocol.Network, error) {
