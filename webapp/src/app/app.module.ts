@@ -4,7 +4,7 @@ import {BrowserModule} from '@angular/platform-browser';
 import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
 import {GraphQLModule} from './graphql.module';
-import {HttpClientModule} from '@angular/common/http';
+import {provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {MatSliderModule} from "@angular/material/slider";
 import {MatToolbarModule} from "@angular/material/toolbar";
@@ -47,11 +47,11 @@ import {FormsModule} from "@angular/forms";
         UserApproveDialog,
         UserDeleteDialog
     ],
+    bootstrap: [AppComponent],
     imports: [
         BrowserModule,
         AppRoutingModule,
         GraphQLModule,
-        HttpClientModule,
         BrowserAnimationsModule,
         MatSliderModule,
         MatToolbarModule,
@@ -73,9 +73,9 @@ import {FormsModule} from "@angular/forms";
         FormsModule
     ],
     providers: [
-        {provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: {duration: 2500}}
-    ],
-    bootstrap: [AppComponent]
+        {provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: {duration: 2500}},
+        provideHttpClient(withInterceptorsFromDi())
+    ]
 })
 export class AppModule {
 }

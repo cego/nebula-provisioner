@@ -14,11 +14,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//go:embed dist/*
+//go:embed dist/browser/*
 var Webapp embed.FS
 
 func WebHandler(l *logrus.Logger) func(w http.ResponseWriter, r *http.Request) {
-	wa, err := fs.Sub(Webapp, "dist")
+	wa, err := fs.Sub(Webapp, "dist/browser")
 	if err != nil {
 		l.WithError(err).Error("Failed to load webapp from fs")
 	}
