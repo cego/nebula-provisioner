@@ -18,10 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Set up Go 1.21
+      - name: Set up Go 1.23
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21
+          go-version: 1.23
         id: go
 
       - name: Check out code into the Go module directory
@@ -30,9 +30,9 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go1.21-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go1.23-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-go1.21-
+            ${{ runner.os }}-go1.23-
 
       - name: Build
         run: make all -B
