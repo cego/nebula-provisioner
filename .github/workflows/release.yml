@@ -11,10 +11,10 @@ jobs:
     name: Build Linux All
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go 1.21
+      - name: Set up Go 1.23
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21
+          go-version: 1.23
 
       - name: Checkout code
         uses: actions/checkout@v4
