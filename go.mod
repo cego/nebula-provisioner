@@ -18,7 +18,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/slackhq/nebula v1.9.4
 	github.com/spf13/cobra v1.8.1
-	github.com/vektah/gqlparser/v2 v2.5.18
+	github.com/vektah/gqlparser/v2 v2.5.21
 	golang.org/x/crypto v0.28.0
 	golang.org/x/oauth2 v0.23.0
 	golang.org/x/tools v0.26.0
@@ -54,7 +54,7 @@ require (
 	github.com/sosodev/duration v1.3.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/urfave/cli/v2 v2.27.5 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.opencensus.io v0.24.0 // indirect
