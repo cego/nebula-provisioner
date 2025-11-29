@@ -57,7 +57,7 @@ func (s *Store) RenewCertForAgents() error {
 
 	err := s.renewCertForAgents(txn)
 	if err != nil {
-		return fmt.Errorf("failed to new certificates for agents")
+		return fmt.Errorf("failed to renew certificates for agents")
 	}
 
 	err = txn.Commit()

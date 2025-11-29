@@ -46,7 +46,8 @@ import {AlertService} from "../alert/alert.service";
       .mat-row-conflict {
         background-color: lightcoral;
       }
-    `]
+    `],
+    standalone: false
 })
 export class EnrollmentRequestApproveDialog implements AfterViewInit, OnDestroy {
     private subs = new SubSink();

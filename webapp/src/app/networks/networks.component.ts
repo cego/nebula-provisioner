@@ -52,6 +52,7 @@ import {Router} from "@angular/router";
         margin-bottom: 1em;
       }
     `],
+    standalone: false
 })
 export class NetworksComponent implements OnInit, OnDestroy {
     private subs = new SubSink();

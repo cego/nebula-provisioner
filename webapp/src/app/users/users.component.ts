@@ -74,6 +74,7 @@ import {AlertService} from "../alert/alert.service";
       }
 
     `],
+    standalone: false
 })
 export class UsersComponent implements OnInit, OnDestroy {
     private subs = new SubSink();
@@ -205,7 +206,8 @@ export class UsersComponent implements OnInit, OnDestroy {
         <button mat-button mat-dialog-close>Cancel</button>
         <button mat-button color="warn" [mat-dialog-close]="true">Approve</button>
     </mat-dialog-actions>
-    `
+    `,
+    standalone: false
 })
 export class UserApproveDialog {
     constructor(@Inject(MAT_DIALOG_DATA) public user: User) {
@@ -224,7 +226,8 @@ export class UserApproveDialog {
         <button mat-button mat-dialog-close>Cancel</button>
         <button mat-button color="warn" [mat-dialog-close]="true">Disable</button>
     </mat-dialog-actions>
-    `
+    `,
+    standalone: false
 })
 export class UserDeleteDialog {
     constructor(@Inject(MAT_DIALOG_DATA) public user: User) {

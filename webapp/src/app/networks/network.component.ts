@@ -78,6 +78,7 @@ import {AlertService} from "../alert/alert.service";
         text-align: right;
       }
     `],
+    standalone: false
 })
 export class NetworkComponent implements OnInit, OnDestroy {
 

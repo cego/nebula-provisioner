@@ -27,6 +27,7 @@ import {Component} from '@angular/core';
       padding: 1em;
     }
     `],
+    standalone: false
 })
 export class AppComponent {
 }
