@@ -4,8 +4,6 @@ package store
 
 import (
 	"bytes"
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -15,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/dgraph-io/badger/v3"
-	"github.com/hashicorp/vault/shamir"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,7 +21,8 @@ type Store struct {
 	unsealed chan interface{}
 	path     string
 	db       *badger.DB
-	keyParts [][]byte
+	// keyParts [][]byte
+	encryption *storeEncryption
 }
 
 const initFileName = "INITIALIZED"
@@ -37,26 +35,14 @@ func (s *Store) Initialize(numParts, threshold uint32) ([]string, error) {
 		return nil, fmt.Errorf("server is already unsealed")
 	}
 
-	// Generating encryption key
-	ek := make([]byte, 32)
-	_, err := rand.Read(ek)
+	ek, keyParts, err := s.encryption.generate(numParts, threshold)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate random encryption key")
-	}
-
-	secretParts, err := shamir.Split(ek, int(numParts), int(threshold))
-	if err != nil {
-		return nil, fmt.Errorf("failed to spilt encryption key using shamir: %v", err)
-	}
-
-	var keyParts []string
-	for _, bytePart := range secretParts {
-		keyParts = append(keyParts, hex.EncodeToString(bytePart))
+		return nil, fmt.Errorf("failed to generate encryption key: %w", err)
 	}
 
 	err = s.open(ek)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize store: %v", err)
+		return nil, fmt.Errorf("failed to initialize store: %w", err)
 	}
 	defer func() {
 		if err := s.Close(); err != nil {
@@ -116,22 +102,15 @@ func (s *Store) Unseal(keyPart string, removeExistingParts bool) error {
 		return fmt.Errorf("server is already unsealed")
 	}
 
-	decodedPart, err := hex.DecodeString(keyPart)
+	ek, err := s.encryption.unseal(keyPart, removeExistingParts)
 	if err != nil {
-		return fmt.Errorf("failed to decode key part")
+		return fmt.Errorf("failed to unseal key: %w", err)
 	}
-
-	s.keyParts = appendIfMissing(s.keyParts, decodedPart)
-
-	ek, err := shamir.Combine(s.keyParts)
-	if err != nil {
-		return fmt.Errorf("failed to combine encryption key using shamir: %s", err)
-	}
-	s.keyParts = nil
 
 	if err := s.open(ek); err != nil {
-		return fmt.Errorf("failed to open store after unsealed encryption key: %s", err)
+		return fmt.Errorf("failed to unsealed store, maybe more keyParts required: %s", err)
 	}
+	s.encryption.clear()
 
 	s.unsealed <- true
 
@@ -164,7 +143,7 @@ func NewStore(l *logrus.Logger, dataDir string, unsealed chan interface{}, encry
 		}
 	}
 
-	s := &Store{l, unsealed, dbPath, nil, make([][]byte, 0)}
+	s := &Store{l, unsealed, dbPath, nil, &storeEncryption{}}
 
 	if !encryptionEnabled {
 		err = s.open([]byte{})
@@ -175,15 +154,6 @@ func NewStore(l *logrus.Logger, dataDir string, unsealed chan interface{}, encry
 	}
 
 	return s, nil
-}
-
-func appendIfMissing(slice [][]byte, b []byte) [][]byte {
-	for _, ele := range slice {
-		if bytes.Compare(ele, b) == 0 {
-			return slice
-		}
-	}
-	return append(slice, b)
 }
 
 func exists(txn *badger.Txn, prefix, key []byte) bool {

@@ -51,7 +51,7 @@ func (s *Store) ListAgentByNetwork(networkName string) ([]*Agent, error) {
 	return s.listAgentByNetwork(txn, networkName)
 }
 
-func (s Store) RenewCertForAgents() error {
+func (s *Store) RenewCertForAgents() error {
 	txn := s.db.NewTransaction(true)
 	defer txn.Discard()
 
@@ -155,7 +155,7 @@ func (s *Store) deleteAgent(txn *badger.Txn, fingerprint []byte) error {
 	return nil
 }
 
-func (s Store) renewCertForAgents(txn *badger.Txn) error {
+func (s *Store) renewCertForAgents(txn *badger.Txn) error {
 	renewThreshold := 7 * 24 * time.Hour
 
 	opts := badger.DefaultIteratorOptions
