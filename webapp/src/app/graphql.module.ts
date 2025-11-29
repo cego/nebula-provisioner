@@ -1,16 +1,16 @@
 import {inject, NgModule} from '@angular/core';
 import {provideApollo} from 'apollo-angular';
-import {ApolloClientOptions, InMemoryCache} from '@apollo/client/core';
+import {ApolloClient, InMemoryCache, ServerError} from "@apollo/client";
 import {HttpLink} from 'apollo-angular/http';
-import {onError} from "@apollo/client/link/error";
-import {HttpErrorResponse} from "@angular/common/http";
+import {ErrorLink} from "@apollo/client/link/error";
+import {provideHttpClient} from "@angular/common/http";
 
 const uri = '/graphql'; // <-- add the URL of the GraphQL server here
-export function createApollo(httpLink: HttpLink): ApolloClientOptions<any> {
+export function createApollo(httpLink: HttpLink): ApolloClient.Options {
     const http = httpLink.create({uri: uri});
-    const error = onError(({networkError}) => {
-        if (networkError instanceof HttpErrorResponse &&
-            networkError.status === 401) {
+    const error = new ErrorLink(({error}) => {
+        if (error instanceof ServerError &&
+            error.statusCode === 401) {
             window.location.href = '/login';
         }
     });
@@ -38,6 +38,7 @@ export function createApollo(httpLink: HttpLink): ApolloClientOptions<any> {
 @NgModule({
     imports: [],
     providers: [
+        provideHttpClient(),
         provideApollo(() => {
 
             const httpLink = inject(HttpLink);

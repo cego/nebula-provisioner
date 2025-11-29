@@ -2,7 +2,7 @@ import {Component, OnDestroy, OnInit} from '@angular/core';
 import {Network} from "../models/network";
 import {of as observableOf} from "rxjs";
 import {catchError, map} from "rxjs/operators";
-import {Apollo, gql} from "apollo-angular";
+import {Apollo, gql, onlyCompleteData} from "apollo-angular";
 import {ApolloResponse} from "../models/apollo";
 import {SubSink} from "subsink";
 import {Router} from "@angular/router";
@@ -10,30 +10,28 @@ import {Router} from "@angular/router";
 @Component({
     selector: 'app-networks',
     template: `
-        <!--<div class="mat-elevation-z8 action-buttons">
-            <div>
-                <button mat-raised-button color="primary" [routerLink]="['add']">Add</button>
-            </div>
-        </div>-->
-
         <div class="mat-elevation-z8">
-            <div class="loading-shade" *ngIf="isLoadingResults">
-                <mat-spinner *ngIf="isLoadingResults"></mat-spinner>
-            </div>
+            @if (isLoadingResults) {
+                <div class="loading-shade">
+                    @if (isLoadingResults) {
+                        <mat-spinner></mat-spinner>
+                    }
+                </div>
+            }
 
             <table mat-table [dataSource]="data">
 
                 <ng-container matColumnDef="name">
                     <th mat-header-cell *matHeaderCellDef> Name</th>
-                    <td mat-cell *matCellDef="let item"> {{item.name}} </td>
+                    <td mat-cell *matCellDef="let item"> {{ item.name }}</td>
                 </ng-container>
                 <ng-container matColumnDef="ips">
                     <th mat-header-cell *matHeaderCellDef> IP's</th>
-                    <td mat-cell *matCellDef="let item"> {{item.ips}} </td>
+                    <td mat-cell *matCellDef="let item"> {{ item.ips }}</td>
                 </ng-container>
                 <ng-container matColumnDef="ipPools">
                     <th mat-header-cell *matHeaderCellDef> IP Pools</th>
-                    <td mat-cell *matCellDef="let item"> {{item.ipPools}} </td>
+                    <td mat-cell *matCellDef="let item"> {{ item.ipPools }}</td>
                 </ng-container>
 
                 <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -77,14 +75,19 @@ export class NetworksComponent implements OnInit, OnDestroy {
                     }
                 }`,
         })
-        .pipe(map(res => {
-                this.isLoadingResults = false;
-                return res.data.getNetworks;
-            }),
-            catchError(() => observableOf([])))
-        .subscribe(data => {
-            this.data = data;
-        });
+            .pipe(
+                map(res => {
+                    this.isLoadingResults = false;
+                    if (res.data) {
+                        return res.data.getNetworks;
+                    } else {
+                        throw new Error("Networks not found");
+                    }
+                }),
+                catchError(() => observableOf([])))
+            .subscribe(data => {
+                this.data = data;
+            });
 
     }
 
