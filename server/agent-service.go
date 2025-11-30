@@ -128,7 +128,7 @@ func (a *agentService) GetEnrollStatus(ctx context.Context, _ *emptypb.Empty) (*
 			res.AssignedIP = ip.String()
 		}
 
-		cas, err := a.store.ListCAByNetwork([]string{agent.NetworkName})
+		cas, err := a.store.ListCAByNetworkNotExpired([]string{agent.NetworkName})
 		if err != nil {
 			return nil, status.Error(codes.Internal, "Failed to get certificate authorities for network")
 		}
@@ -153,7 +153,7 @@ func (a *agentService) GetCertificateAuthorityByNetwork(ctx context.Context, req
 		return nil, status.Error(codes.PermissionDenied, "")
 	}
 
-	cas, err := a.store.ListCAByNetwork(request.NetworkNames)
+	cas, err := a.store.ListCAByNetworkNotExpired(request.NetworkNames)
 	if err != nil {
 		a.l.WithError(err)
 		return nil, status.Error(codes.Internal, fmt.Sprintf("%s", err))
