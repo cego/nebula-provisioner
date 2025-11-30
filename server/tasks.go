@@ -34,6 +34,7 @@ func (t *tasks) Start() {
 				t.renewCerts()
 			case <-renewCATicker.C:
 				t.renewCAs()
+				t.expireCAs()
 			case <-dbGCTicker.C:
 				t.dbGC()
 			case <-t.quit:
@@ -62,6 +63,14 @@ func (t *tasks) renewCAs() {
 	err := t.store.RenewCAs()
 	if err != nil {
 		t.l.WithError(err).Errorln("error when renewing ca certificates")
+	}
+}
+
+func (t *tasks) expireCAs() {
+	t.l.Infoln("Task: update status for expired ca certificates")
+	err := t.store.UpdateExpiredCAs()
+	if err != nil {
+		t.l.WithError(err).Errorln("error when updating expire for ca certificates")
 	}
 }
 

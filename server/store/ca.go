@@ -72,6 +72,25 @@ func (s *Store) ListCAByNetwork(networks []string) ([]*CA, error) {
 	return cas, nil
 }
 
+func (s *Store) ListCAByNetworkNotExpired(networks []string) ([]*CA, error) {
+	txn := s.db.NewTransaction(false)
+	defer txn.Discard()
+
+	cas, err := s.listCAByNetwork(txn, networks)
+	if err != nil {
+		return nil, err
+	}
+
+	validCas := make([]*CA, 0)
+	for _, ca := range cas {
+		if ca.Status != CA_Expired {
+			validCas = append(validCas, ca)
+		}
+	}
+
+	return validCas, nil
+}
+
 func (s *Store) ListCRLByNetwork(networks []string) ([]*protocol.NetworkCRL, error) {
 	txn := s.db.NewTransaction(false)
 	defer txn.Discard()
@@ -291,6 +310,37 @@ func (s *Store) RenewCAs() error {
 	err = txn.Commit()
 	if err != nil {
 		return fmt.Errorf("failed to commit RenewCAs: %v", err)
+	}
+
+	return nil
+}
+
+func (s *Store) UpdateExpiredCAs() error {
+	txn := s.db.NewTransaction(true)
+	defer txn.Discard()
+
+	networks, err := s.listNetworks(txn)
+	if err != nil {
+		return fmt.Errorf("failed to get networks %s", err)
+	}
+
+	for _, network := range networks {
+		cas, err := s.listCAByNetwork(txn, []string{network.Name})
+		if err != nil {
+			return fmt.Errorf("failed to get CA` for network: %s", network)
+		}
+
+		for _, ca := range cas {
+			_, err := s.expireCA(txn, ca)
+			if err != nil {
+				return fmt.Errorf("failed to expire CA: %s", err)
+			}
+		}
+	}
+
+	err = txn.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to commit UpdateExpiredCAs: %v", err)
 	}
 
 	return nil
