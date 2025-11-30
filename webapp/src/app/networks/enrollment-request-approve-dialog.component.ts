@@ -15,15 +15,15 @@ import {AlertService} from "../alert/alert.service";
         <table mat-table [dataSource]="datasource">
             <ng-container matColumnDef="name">
                 <th mat-header-cell *matHeaderCellDef></th>
-                <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+                <td mat-cell *matCellDef="let element"> {{ element.name }}</td>
             </ng-container>
             <ng-container matColumnDef="new">
                 <th mat-header-cell *matHeaderCellDef> New</th>
-                <td mat-cell *matCellDef="let element"> {{element.new}} </td>
+                <td mat-cell *matCellDef="let element"> {{ element.new }}</td>
             </ng-container>
             <ng-container matColumnDef="old">
                 <th mat-header-cell *matHeaderCellDef> Current</th>
-                <td mat-cell *matCellDef="let element"> {{element.old}} </td>
+                <td mat-cell *matCellDef="let element"> {{ element.old }}</td>
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -31,7 +31,7 @@ import {AlertService} from "../alert/alert.service";
         </table>
 
         <hr>
-        Fingerprint: {{er.fingerprint}}
+        Fingerprint: {{ er.fingerprint }}
     </mat-dialog-content>
     <mat-dialog-actions align="end">
         <button mat-button mat-dialog-close>Cancel</button>
@@ -46,7 +46,8 @@ import {AlertService} from "../alert/alert.service";
       .mat-row-conflict {
         background-color: lightcoral;
       }
-    `]
+    `],
+    standalone: false
 })
 export class EnrollmentRequestApproveDialog implements AfterViewInit, OnDestroy {
     private subs = new SubSink();
@@ -109,7 +110,9 @@ export class EnrollmentRequestApproveDialog implements AfterViewInit, OnDestroy 
             },
             query: GET_AGENT_BY_CLIENT_FINGERPRINT,
         }).subscribe(data => {
-            this.existingAgent = data.data.getAgent;
+            if (data.data) {
+                this.existingAgent = data.data.getAgent;
+            }
             this.renderRows();
         }, error => {
             this.alert.addAlert('danger', error.message);

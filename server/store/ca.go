@@ -375,7 +375,7 @@ func (s *Store) signCSR(txn *badger.Txn, agent *Agent, ip *net.IPNet) (*Agent, e
 			Name:   name,
 			Ips:    []*net.IPNet{ip},
 			Groups: agent.Groups,
-			//Subnets:   subnets,
+			// Subnets:   subnets,
 			NotBefore: time.Now(),
 			NotAfter:  time.Now().Add(duration), // TODO load default duration from config
 			PublicKey: pub,
@@ -509,7 +509,7 @@ func (s *Store) addRevokedForNetwork(txn *badger.Txn, networkName string, finger
 	return nil
 }
 
-func (s Store) saveCA(txn *badger.Txn, ca *CA) error {
+func (s *Store) saveCA(txn *badger.Txn, ca *CA) error {
 	caBytes, err := proto.Marshal(ca)
 	if err != nil {
 		return fmt.Errorf("failed to marshal CA: %s", err)

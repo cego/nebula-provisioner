@@ -15,6 +15,7 @@ import {MatSnackBar} from "@angular/material/snack-bar";
       }
     `],
     encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class AlertsComponent implements OnInit, OnDestroy {
     private subs = new SubSink();

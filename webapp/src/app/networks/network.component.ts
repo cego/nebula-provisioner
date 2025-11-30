@@ -1,6 +1,6 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {EnrollmentRequest, GET_NETWORK_BY_NAME, Network} from "../models/network";
-import {Apollo} from "apollo-angular";
+import {Apollo, onlyCompleteData} from "apollo-angular";
 import {SubSink} from "subsink";
 import {ActivatedRoute} from "@angular/router";
 import {filter, switchMap} from "rxjs/operators";
@@ -12,55 +12,59 @@ import {AlertService} from "../alert/alert.service";
     selector: 'app-network',
     template: `
         <div class="mat-elevation-z8 content-elm">
-            <h1>Network: {{network?.name}}</h1>
+            <h1>Network: {{ network?.name }}</h1>
             <table>
                 <tbody>
                 <tr>
                     <td>IP's:</td>
-                    <td>{{network?.ips}}</td>
+                    <td>{{ network?.ips }}</td>
                 </tr>
                 <tr>
                     <td>IP Pools:</td>
-                    <td>{{network?.ipPools}}</td>
+                    <td>{{ network?.ipPools }}</td>
                 </tr>
                 <tr>
                     <td>Duration:</td>
-                    <td>{{network?.duration}}</td>
+                    <td>{{ network?.duration }}</td>
                 </tr>
                 <tr>
                     <td>Groups:</td>
-                    <td>{{network?.groups}}</td>
+                    <td>{{ network?.groups }}</td>
                 </tr>
                 <tr>
                     <td>Subnets:</td>
-                    <td>{{network?.subnets}}</td>
+                    <td>{{ network?.subnets }}</td>
                 </tr>
                 <tr>
                     <td>Enrollment token:</td>
-                    <td>{{network?.enrollmentToken}}</td>
+                    <td>{{ network?.enrollmentToken }}</td>
                 </tr>
                 </tbody>
             </table>
         </div>
-        <div class="mat-elevation-z8 content-elm" *ngIf="enrollmentRequests.length > 0">
-            <h1>Enrollment Requests</h1>
+        @if (enrollmentRequests.length > 0) {
+            <div class="mat-elevation-z8 content-elm">
+                <h1>Enrollment Requests</h1>
+                <app-network-enrollment-requests
+                        [enrollmentRequests]="enrollmentRequests"></app-network-enrollment-requests>
+            </div>
+        }
 
-            <app-network-enrollment-requests
-                    [enrollmentRequests]="enrollmentRequests"></app-network-enrollment-requests>
-        </div>
-
-        <div class="mat-elevation-z8 content-elm" *ngIf="agents.length > 0">
-            <h1>Agents</h1>
-            <mat-form-field>
-                <mat-label>Search</mat-label>
-                <input matInput type="text" [(ngModel)]="filter">
-                <button *ngIf="filter" matSuffix mat-icon-button aria-label="Search" (click)="filter=''">
-                    <mat-icon>close</mat-icon>
-                </button>
-            </mat-form-field>
-
-            <app-network-agents [agents]="agents" [filter]="filter"></app-network-agents>
-        </div>
+        @if (agents.length > 0) {
+            <div class="mat-elevation-z8 content-elm">
+                <h1>Agents</h1>
+                <mat-form-field>
+                    <mat-label>Search</mat-label>
+                    <input matInput type="text" [(ngModel)]="filter">
+                    @if (filter) {
+                        <button matSuffix mat-icon-button aria-label="Search" (click)="filter=''">
+                            <mat-icon>close</mat-icon>
+                        </button>
+                    }
+                </mat-form-field>
+                <app-network-agents [agents]="agents" [filter]="filter"></app-network-agents>
+            </div>
+        }
     `,
     styles: [`
       table {
@@ -78,6 +82,7 @@ import {AlertService} from "../alert/alert.service";
         text-align: right;
       }
     `],
+    standalone: false
 })
 export class NetworkComponent implements OnInit, OnDestroy {
 
@@ -104,7 +109,8 @@ export class NetworkComponent implements OnInit, OnDestroy {
                         },
                         query: GET_NETWORK_BY_NAME,
                     }).valueChanges
-                )
+                ),
+                onlyCompleteData()
             )
             .subscribe(data => {
                 this.network = data?.data?.getNetwork;

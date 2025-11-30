@@ -1,7 +1,7 @@
 import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
 import {of as observableOf} from "rxjs";
 import {catchError, map} from "rxjs/operators";
-import {Apollo, gql} from "apollo-angular";
+import {Apollo, gql, onlyCompleteData} from "apollo-angular";
 import {ApolloResponse} from "../models/apollo";
 import {SubSink} from "subsink";
 import {User} from "../models/user";
@@ -12,36 +12,46 @@ import {AlertService} from "../alert/alert.service";
     selector: 'app-users',
     template: `
         <div class="mat-elevation-z8">
-            <div class="loading-shade" *ngIf="isLoadingResults">
-                <mat-spinner *ngIf="isLoadingResults"></mat-spinner>
-            </div>
+            @if (isLoadingResults) {
+                <div class="loading-shade">
+                    @if (isLoadingResults) {
+                        <mat-spinner></mat-spinner>
+                    }
+                </div>
+            }
 
             <table mat-table [dataSource]="data">
 
                 <ng-container matColumnDef="name">
                     <th mat-header-cell *matHeaderCellDef> Name</th>
-                    <td mat-cell *matCellDef="let user"> {{user.name}} </td>
+                    <td mat-cell *matCellDef="let user"> {{ user.name }}</td>
                 </ng-container>
                 <ng-container matColumnDef="email">
                     <th mat-header-cell *matHeaderCellDef> E-mail</th>
-                    <td mat-cell *matCellDef="let user"> {{user.email}} </td>
+                    <td mat-cell *matCellDef="let user"> {{ user.email }}</td>
                 </ng-container>
                 <ng-container matColumnDef="approve">
                     <th mat-header-cell *matHeaderCellDef></th>
                     <td mat-cell *matCellDef="let user">
-                        <button mat-raised-button (click)="approveUserDialog(user)"
-                                *ngIf="!user.userApprove?.approved || user.disabled">
-                            Approve
-                        </button>
-                        <span *ngIf="user.userApprove?.approved && !user.disabled">Approved by: {{user.userApprove?.approvedByUser?.name}}</span>
+                        @if (!user.userApprove?.approved || user.disabled) {
+                            <button mat-raised-button (click)="approveUserDialog(user)"
+                            >
+                                Approve
+                            </button>
+                        }
+                        @if (user.userApprove?.approved && !user.disabled) {
+                            <span>Approved by: {{ user.userApprove?.approvedByUser?.name }}</span>
+                        }
                     </td>
                 </ng-container>
                 <ng-container matColumnDef="actions">
                     <th mat-header-cell *matHeaderCellDef></th>
                     <td mat-cell *matCellDef="let user">
-                        <button mat-mini-fab color="warn" *ngIf="!user.disabled" (click)="deleteUserDialog(user)">
-                            <mat-icon>delete</mat-icon>
-                        </button>
+                        @if (!user.disabled) {
+                            <button mat-mini-fab color="warn" (click)="deleteUserDialog(user)">
+                                <mat-icon>delete</mat-icon>
+                            </button>
+                        }
                     </td>
                 </ng-container>
 
@@ -74,6 +84,7 @@ import {AlertService} from "../alert/alert.service";
       }
 
     `],
+    standalone: false
 })
 export class UsersComponent implements OnInit, OnDestroy {
     private subs = new SubSink();
@@ -107,16 +118,18 @@ export class UsersComponent implements OnInit, OnDestroy {
                         }
                     }
                 }`,
-        }).valueChanges.pipe(map(res => {
+        }).valueChanges.pipe(
+            onlyCompleteData(),
+            map(res => {
                 this.isLoadingResults = false;
                 return res.data.getUsers;
             }),
             catchError(() => observableOf([])))
-        .subscribe(data => {
-            this.data = data;
-        }, error => {
-            this.alert.addAlert('danger', error.message);
-        });
+            .subscribe(data => {
+                this.data = data;
+            }, error => {
+                this.alert.addAlert('danger', error.message);
+            });
 
     }
 
@@ -195,17 +208,18 @@ export class UsersComponent implements OnInit, OnDestroy {
 
 @Component({
     selector: 'user-approve-dialog',
-    template: `<h1 mat-dialog-title>Approve User: {{user.email}}</h1>
+    template: `<h1 mat-dialog-title>Approve User: {{ user.email }}</h1>
     <mat-dialog-content class="mat-typography">
-        ID: {{user.id}}<br/>
-        Name: {{user.name}}<br/>
-        E-mail: {{user.email}}
+        ID: {{ user.id }}<br/>
+        Name: {{ user.name }}<br/>
+        E-mail: {{ user.email }}
     </mat-dialog-content>
     <mat-dialog-actions align="end">
         <button mat-button mat-dialog-close>Cancel</button>
         <button mat-button color="warn" [mat-dialog-close]="true">Approve</button>
     </mat-dialog-actions>
-    `
+    `,
+    standalone: false
 })
 export class UserApproveDialog {
     constructor(@Inject(MAT_DIALOG_DATA) public user: User) {
@@ -214,17 +228,18 @@ export class UserApproveDialog {
 
 @Component({
     selector: 'user-delete-dialog',
-    template: `<h1 mat-dialog-title>Disable User: {{user.email}}</h1>
+    template: `<h1 mat-dialog-title>Disable User: {{ user.email }}</h1>
     <mat-dialog-content class="mat-typography">
-        ID: {{user.id}}<br/>
-        Name: {{user.name}}<br/>
-        E-mail: {{user.email}}
+        ID: {{ user.id }}<br/>
+        Name: {{ user.name }}<br/>
+        E-mail: {{ user.email }}
     </mat-dialog-content>
     <mat-dialog-actions align="end">
         <button mat-button mat-dialog-close>Cancel</button>
         <button mat-button color="warn" [mat-dialog-close]="true">Disable</button>
     </mat-dialog-actions>
-    `
+    `,
+    standalone: false
 })
 export class UserDeleteDialog {
     constructor(@Inject(MAT_DIALOG_DATA) public user: User) {

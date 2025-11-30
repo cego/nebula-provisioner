@@ -58,6 +58,7 @@ import {MatSort} from "@angular/material/sort";
         text-align: right;
       }
     `],
+    standalone: false
 })
 export class NetworkAgentsComponent implements AfterViewInit, OnDestroy {
     private subs = new SubSink();
@@ -133,7 +134,8 @@ export class NetworkAgentsComponent implements AfterViewInit, OnDestroy {
     <mat-dialog-actions align="end">
         <button mat-button mat-dialog-close>Cancel</button>
         <button mat-button color="warn" [mat-dialog-close]="true">Revoke</button>
-    </mat-dialog-actions>`
+    </mat-dialog-actions>`,
+    standalone: false
 })
 export class NetworkAgentRevokeDialog {
     constructor(@Inject(MAT_DIALOG_DATA) public agent: Agent) {

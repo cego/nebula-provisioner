@@ -67,6 +67,7 @@ import {EnrollmentRequestApproveDialog} from "./enrollment-request-approve-dialo
         text-align: right;
       }
     `],
+    standalone: false
 })
 export class NetworkEnrollmentRequestsComponent implements OnDestroy {
     private subs = new SubSink();
