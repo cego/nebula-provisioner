@@ -9,45 +9,10 @@ import (
 	"github.com/cego/nebula-provisioner/protocol"
 	"github.com/cego/nebula-provisioner/server/store"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
-
-func (srv *server) startUnixSocket(s *store.Store) error {
-	srv.l.Println("Starting http unix socket")
-	socketPath := srv.config.GetString("command.socket", "/tmp/nebula-provisioner.socket") // TODO Change default path
-	lis, err := net.Listen("unix", socketPath)
-	if err != nil {
-		return err
-	}
-
-	var opts []grpc.ServerOption
-	srv.unixGrpc = grpc.NewServer(opts...)
-
-	c := commandServer{
-		l:         srv.l,
-		store:     s,
-		ipManager: srv.ipManager,
-	}
-	protocol.RegisterServerCommandServer(srv.unixGrpc, &c)
-	go func() {
-		err := srv.unixGrpc.Serve(lis)
-		if err != nil {
-			srv.l.WithError(err).Error("Failed to start http unix socket")
-		}
-	}()
-	return nil
-}
-
-func (s *server) stopUnixSocket() error {
-	s.l.Println("Stopping http unix socket")
-	if s.unixGrpc != nil {
-		s.unixGrpc.GracefulStop()
-	}
-	return nil
-}
 
 type commandServer struct {
 	protocol.UnimplementedServerCommandServer

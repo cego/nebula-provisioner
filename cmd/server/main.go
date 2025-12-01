@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -49,6 +50,7 @@ func main() {
 		fmt.Printf("failed to load config: %s", err)
 		os.Exit(1)
 	}
+	config.CatchHUP(context.Background())
 
 	c, err := server.Main(config, Build, l)
 	if err != nil {
