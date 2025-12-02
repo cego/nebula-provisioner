@@ -31,12 +31,12 @@ func dirExists(path string) (bool, os.FileInfo) {
 func getConfigPath() string {
 	ok, _ := dirExists("/etc/nebula-provisioner")
 	if ok {
-		return "/etc/nebula-provisioner"
+		return "/etc/nebula-provisioner/agent.yml"
 	}
 
 	ok, _ = dirExists("/opt/nebula-provisioner/etc")
 	if ok {
-		return "/opt/nebula-provisioner/etc"
+		return "/opt/nebula-provisioner/etc/agent.yml"
 	}
 
 	dir, err := os.Getwd()
