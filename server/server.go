@@ -3,10 +3,12 @@ package server
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/cego/nebula-provisioner/protocol"
 	"github.com/cego/nebula-provisioner/server/store"
@@ -17,15 +19,17 @@ import (
 )
 
 type server struct {
-	l            *logrus.Logger
-	config       *config.C
-	buildVersion string
-	initialized  bool
-	store        *store.Store
-	ipManager    *store.IPManager
-	unixGrpc     *grpc.Server
-	agentService *grpc.Server
-	tasks        *tasks
+	l              *logrus.Logger
+	config         *config.C
+	buildVersion   string
+	initialized    bool
+	store          *store.Store
+	ipManager      *store.IPManager
+	unixGrpc       *grpc.Server
+	agentService   *grpc.Server
+	tasks          *tasks
+	tlsLock        sync.RWMutex
+	tlsCertificate *tls.Certificate
 }
 
 func Main(config *config.C, buildVersion string, logger *logrus.Logger) (*Control, error) {
@@ -34,7 +38,7 @@ func Main(config *config.C, buildVersion string, logger *logrus.Logger) (*Contro
 		FullTimestamp: true,
 	}
 
-	server := server{l, config, buildVersion, false, nil, nil, nil, nil, nil}
+	server := server{l: l, config: config, buildVersion: buildVersion}
 
 	return &Control{l, server.start, server.stop, make(chan interface{})}, nil
 }
@@ -164,17 +168,31 @@ func (s *server) startHttpsServer(dataDir string) error {
 
 		tlsConfig = manager.TLSConfig()
 	} else {
+		s.config.RegisterReloadCallback(func(_ *config.C) {
+			s.l.Info("Reloading tls cert")
+			keyPair, err := s.getKeyPair()
+			if err != nil {
+				return
+			}
+			s.tlsLock.Lock()
+			defer s.tlsLock.Unlock()
+			s.tlsCertificate = keyPair
+		})
 
-		cert := s.config.GetString("pki.cert", "server.crt")
-		key := s.config.GetString("pki.key", "server.key")
-
-		keyPair, err := tls.LoadX509KeyPair(cert, key)
+		keyPair, err := s.getKeyPair()
 		if err != nil {
-			s.l.WithError(err).Errorf("SERVER: unable to read server key pair: %v", err)
 			return err
 		}
+		s.tlsLock.Lock()
+		defer s.tlsLock.Unlock()
+		s.tlsCertificate = keyPair
+
 		tlsConfig = &tls.Config{
-			Certificates: []tls.Certificate{keyPair},
+			GetCertificate: func(_ *tls.ClientHelloInfo) (*tls.Certificate, error) {
+				s.tlsLock.RLock()
+				defer s.tlsLock.RUnlock()
+				return s.tlsCertificate, nil
+			},
 		}
 	}
 
@@ -195,6 +213,52 @@ func (s *server) startHttpsServer(dataDir string) error {
 			s.l.WithError(err).Errorf("SERVER: failed to serve: %v", err)
 		}
 	}()
+	return nil
+}
+
+func (s *server) getKeyPair() (*tls.Certificate, error) {
+	cert := s.config.GetString("pki.cert", "server.crt")
+	key := s.config.GetString("pki.key", "server.key")
+
+	keyPair, err := tls.LoadX509KeyPair(cert, key)
+	if err != nil {
+		s.l.WithError(err).Errorf("SERVER: unable to read server key pair: %v", err)
+		return nil, err
+	}
+	return &keyPair, nil
+}
+
+func (s *server) startUnixSocket(store *store.Store) error {
+	s.l.Println("Starting http unix socket")
+	socketPath := s.config.GetString("command.socket", "/tmp/nebula-provisioner.socket") // TODO Change default path
+	lis, err := net.Listen("unix", socketPath)
+	if err != nil {
+		return err
+	}
+
+	var opts []grpc.ServerOption
+	s.unixGrpc = grpc.NewServer(opts...)
+
+	c := commandServer{
+		l:         s.l,
+		store:     store,
+		ipManager: s.ipManager,
+	}
+	protocol.RegisterServerCommandServer(s.unixGrpc, &c)
+	go func() {
+		err := s.unixGrpc.Serve(lis)
+		if err != nil {
+			s.l.WithError(err).Error("Failed to start http unix socket")
+		}
+	}()
+	return nil
+}
+
+func (s *server) stopUnixSocket() error {
+	s.l.Println("Stopping http unix socket")
+	if s.unixGrpc != nil {
+		s.unixGrpc.GracefulStop()
+	}
 	return nil
 }
 

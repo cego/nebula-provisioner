@@ -23,9 +23,20 @@ func NewTasks(l *logrus.Logger, config *config.C, store *store.Store) *tasks {
 func (t *tasks) Start() {
 	t.l.Infoln("Starting task scheduler")
 
-	renewCertTicker := time.NewTicker(t.config.GetDuration("tasks.certRenew.interval", 1*time.Hour))
-	renewCATicker := time.NewTicker(t.config.GetDuration("tasks.caRenew.interval", 24*time.Hour))
-	dbGCTicker := time.NewTicker(t.config.GetDuration("tasks.dbGC.interval", 5*time.Minute))
+	renewCertDuration := func() time.Duration { return t.config.GetDuration("tasks.certRenew.interval", 1*time.Hour) }
+	renewCADuration := func() time.Duration { return t.config.GetDuration("tasks.caRenew.interval", 24*time.Hour) }
+	dbGCDuration := func() time.Duration { return t.config.GetDuration("tasks.dbGC.interval", 5*time.Minute) }
+
+	renewCertTicker := time.NewTicker(renewCertDuration())
+	renewCATicker := time.NewTicker(renewCADuration())
+	dbGCTicker := time.NewTicker(dbGCDuration())
+
+	t.config.RegisterReloadCallback(func(_ *config.C) {
+		t.l.Info("Reloading task scheduler")
+		renewCertTicker.Reset(renewCertDuration())
+		renewCATicker.Reset(renewCADuration())
+		dbGCTicker.Reset(dbGCDuration())
+	})
 
 	go func() {
 		for {
@@ -39,6 +50,8 @@ func (t *tasks) Start() {
 				t.dbGC()
 			case <-t.quit:
 				renewCertTicker.Stop()
+				renewCATicker.Stop()
+				dbGCTicker.Stop()
 				return
 			}
 		}
