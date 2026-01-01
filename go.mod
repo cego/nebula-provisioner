@@ -14,7 +14,7 @@ require (
 	github.com/openbao/openbao/sdk/v2 v2.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/slackhq/nebula v1.9.7
+	github.com/slackhq/nebula v1.10.0
 	github.com/spf13/cobra v1.10.1
 	github.com/vektah/gqlparser/v2 v2.5.31
 	golang.org/x/crypto v0.45.0
@@ -27,7 +27,7 @@ require (
 )
 
 require (
-	dario.cat/mergo v1.0.1 // indirect
+	dario.cat/mergo v1.0.2 // indirect
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -56,6 +56,7 @@ require (
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/urfave/cli/v3 v3.6.1 // indirect
 	go.opencensus.io v0.24.0 // indirect
+	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/mod v0.30.0 // indirect
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sync v0.18.0 // indirect
@@ -65,5 +66,4 @@ require (
 	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251029180050-ab9386a59fda // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
