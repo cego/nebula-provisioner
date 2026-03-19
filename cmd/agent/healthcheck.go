@@ -66,7 +66,7 @@ var healthcheckCmd = &cobra.Command{
 			fmt.Printf("failed to read file: %s err: %s\n", filepath.Join(outputPath, NebulaCrtPath), err)
 			os.Exit(2)
 		}
-		crt, _, err := cert.UnmarshalNebulaCertificateFromPEM(bytes)
+		crt, _, err := cert.UnmarshalCertificateFromPEM(bytes)
 		if err != nil {
 			fmt.Printf("failed to unmarshall nebula certificate err: %s\n", err)
 			os.Exit(2)
@@ -78,12 +78,12 @@ var healthcheckCmd = &cobra.Command{
 		}
 
 		if crt.Expired(time.Now().AddDate(0, 0, critDaysBeforeExpire)) {
-			fmt.Printf("nebula certificate will expire at %s\n", crt.Details.NotAfter)
+			fmt.Printf("nebula certificate will expire at %s\n", crt.NotAfter())
 			os.Exit(2)
 		}
 
 		if crt.Expired(time.Now().AddDate(0, 0, warnDaysBeforeExpire)) {
-			fmt.Printf("nebula certificate will expire at %s\n", crt.Details.NotAfter)
+			fmt.Printf("nebula certificate will expire at %s\n", crt.NotAfter())
 			os.Exit(1)
 		}
 
@@ -110,21 +110,21 @@ func checkCA(outputPath string, warnDaysBeforeExpire, critDaysBeforeExpire int) 
 		os.Exit(2)
 	}
 
-	var newestCA *cert.NebulaCertificate
+	var newestCA cert.Certificate
 
-	var ca *cert.NebulaCertificate
+	var ca cert.Certificate
 	for true {
 		if len(bytes) <= 1 {
 			break
 		}
-		ca, bytes, err = cert.UnmarshalNebulaCertificateFromPEM(bytes)
+		ca, bytes, err = cert.UnmarshalCertificateFromPEM(bytes)
 		if err != nil {
 			fmt.Printf("failed to unmarshall nebula ca certificate err: %s\n", err)
 			os.Exit(2)
 		}
 		if newestCA == nil {
 			newestCA = ca
-		} else if newestCA.Details.NotAfter.Before(ca.Details.NotAfter) {
+		} else if newestCA.NotAfter().Before(ca.NotAfter()) {
 			newestCA = ca
 		}
 	}
@@ -135,12 +135,12 @@ func checkCA(outputPath string, warnDaysBeforeExpire, critDaysBeforeExpire int) 
 	}
 
 	if newestCA.Expired(time.Now().AddDate(0, 0, critDaysBeforeExpire)) {
-		fmt.Printf("nebula ca certificate will expire at %s\n", newestCA.Details.NotAfter)
+		fmt.Printf("nebula ca certificate will expire at %s\n", newestCA.NotAfter())
 		os.Exit(2)
 	}
 
 	if newestCA.Expired(time.Now().AddDate(0, 0, warnDaysBeforeExpire)) {
-		fmt.Printf("nebula ca certificate will expire at %s\n", newestCA.Details.NotAfter)
+		fmt.Printf("nebula ca certificate will expire at %s\n", newestCA.NotAfter())
 		os.Exit(1)
 	}
 

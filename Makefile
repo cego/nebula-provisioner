@@ -90,10 +90,10 @@ PROTOC_GEN_GO_GRPC = $(LOCALBIN)/protoc-gen-go-grpc
 GQLGEN = $(LOCALBIN)/gqlgen
 
 ## Tool Versions
-BUF_VERSION ?= v1.61.0
-PROTOC_GEN_GO_VERSION ?= v1.36.10
-PROTOC_GEN_GO_GRPC_VERSION ?= v1.6.0
-GQLGEN_VERSION ?= v0.17.84
+BUF_VERSION ?= v1.66.1
+PROTOC_GEN_GO_VERSION ?= v1.36.11
+PROTOC_GEN_GO_GRPC_VERSION ?= v1.6.1
+GQLGEN_VERSION ?= v0.17.88
 
 .PHONY: buf
 buf: $(BUF) ## Download buf locally if necessary.

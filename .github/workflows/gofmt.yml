@@ -17,7 +17,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.25
+          go-version: 1.26
         id: go
 
       - name: Check out code into the Go module directory
@@ -26,9 +26,9 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ~/go/pkg/mod
-          key: ${{ runner.os }}-gofmt1.25-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-gofmt1.26-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-gofmt1.25-
+            ${{ runner.os }}-gofmt1.26-
 
       - name: gofmt
         run: |

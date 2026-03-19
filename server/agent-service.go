@@ -66,7 +66,7 @@ func (a *agentService) Enroll(ctx context.Context, request *protocol.EnrollReque
 		}
 	}
 
-	_, _, err = cert.UnmarshalX25519PublicKey([]byte(request.CsrPEM))
+	_, _, _, err = cert.UnmarshalPublicKeyFromPEM([]byte(request.CsrPEM))
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "CsrPEM is invalid")
 	}
