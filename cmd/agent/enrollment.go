@@ -325,13 +325,13 @@ func generateNebulaKeyPair() ([]byte, error) {
 		}
 		curve25519.ScalarBaseMult(&pubkey, &privkey)
 
-		err := ioutil.WriteFile(resolvePath(AgentNebulaKeyPath), cert.MarshalX25519PrivateKey(privkey[:]), 0600)
+		err := os.WriteFile(resolvePath(AgentNebulaKeyPath), cert.MarshalPrivateKeyToPEM(cert.Curve_CURVE25519, privkey[:]), 0600)
 		if err != nil {
 			return nil, fmt.Errorf("error while writing key: %s", err)
 		}
 
-		csr = cert.MarshalX25519PublicKey(pubkey[:])
-		err = ioutil.WriteFile(resolvePath(AgentNebulaCsrPath), csr, 0600)
+		csr = cert.MarshalPublicKeyToPEM(cert.Curve_CURVE25519, pubkey[:])
+		err = os.WriteFile(resolvePath(AgentNebulaCsrPath), csr, 0600)
 		if err != nil {
 			return nil, fmt.Errorf("error while writing csr: %s", err)
 		}

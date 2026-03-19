@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net"
+	"net/netip"
 	"time"
 
 	"github.com/cego/nebula-provisioner/protocol"
@@ -285,20 +286,20 @@ func (s *Store) RenewCAs() error {
 			continue
 		}
 
-		activePublicKey, _, err := cert.UnmarshalNebulaCertificateFromPEM(active.PublicKey)
+		activePublicKey, _, err := cert.UnmarshalCertificateFromPEM(active.PublicKey)
 		if err != nil {
 			return fmt.Errorf("failed to parse active CA %s", err)
 		}
 
 		// Ensure next is created if active expires in less than 60 days
-		if time.Now().Add(60*24*time.Hour).After(activePublicKey.Details.NotAfter) && next == nil {
+		if time.Now().Add(60*24*time.Hour).After(activePublicKey.NotAfter()) && next == nil {
 			next, err = s.prepareCARollover(txn, cas, network)
 			if err != nil {
 				return err
 			}
 		}
 
-		if time.Now().Add(45*24*time.Hour).After(activePublicKey.Details.NotAfter) && next != nil {
+		if time.Now().Add(45*24*time.Hour).After(activePublicKey.NotAfter()) && next != nil {
 			err = s.switchActiveCA(txn, cas, network.Name)
 			if err != nil {
 				return err
@@ -347,11 +348,11 @@ func (s *Store) UpdateExpiredCAs() error {
 }
 
 func (s *Store) expireCA(txn *badger.Txn, ca *CA) (bool, error) {
-	publicKey, _, err := cert.UnmarshalNebulaCertificateFromPEM(ca.PublicKey)
+	publicKey, _, err := cert.UnmarshalCertificateFromPEM(ca.PublicKey)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse CA %s", err)
 	}
-	if publicKey.Details.NotAfter.Before(time.Now()) {
+	if publicKey.NotAfter().Before(time.Now()) {
 		ca.Status = CA_Expired
 		err = s.saveCA(txn, ca)
 		if err != nil {
@@ -389,19 +390,14 @@ func (s *Store) signCSR(txn *badger.Txn, agent *Agent, ip *net.IPNet) (*Agent, e
 		return nil, fmt.Errorf("no active CA found for network: %s", agent.NetworkName)
 	}
 
-	caKey, _, err := cert.UnmarshalEd25519PrivateKey(ca.PrivateKey)
+	caKey, _, _, err := cert.UnmarshalSigningPrivateKeyFromPEM(ca.PrivateKey)
 	if err != nil {
 		return nil, fmt.Errorf("error while parsing ca-key: %s", err)
 	}
 
-	caCert, _, err := cert.UnmarshalNebulaCertificateFromPEM(ca.PublicKey)
+	caCert, _, err := cert.UnmarshalCertificateFromPEM(ca.PublicKey)
 	if err != nil {
 		return nil, fmt.Errorf("error while parsing ca-crt: %s", err)
-	}
-
-	issuer, err := caCert.Sha256Sum()
-	if err != nil {
-		return nil, fmt.Errorf("error while getting ca-crt fingerprint: %s", err)
 	}
 
 	if caCert.Expired(time.Now()) {
@@ -409,7 +405,7 @@ func (s *Store) signCSR(txn *badger.Txn, agent *Agent, ip *net.IPNet) (*Agent, e
 	}
 
 	duration := time.Hour * 24 * 30
-	pub, _, err := cert.UnmarshalX25519PublicKey([]byte(agent.CsrPEM))
+	pub, _, _, err := cert.UnmarshalPublicKeyFromPEM([]byte(agent.CsrPEM))
 	if err != nil {
 		return nil, fmt.Errorf("error while parsing in-pub: %s", err)
 	}
@@ -420,37 +416,35 @@ func (s *Store) signCSR(txn *badger.Txn, agent *Agent, ip *net.IPNet) (*Agent, e
 		name = agent.Name + "-" + name
 	}
 
-	nc := cert.NebulaCertificate{
-		Details: cert.NebulaCertificateDetails{
-			Name:   name,
-			Ips:    []*net.IPNet{ip},
-			Groups: agent.Groups,
-			// Subnets:   subnets,
-			NotBefore: time.Now(),
-			NotAfter:  time.Now().Add(duration), // TODO load default duration from config
-			PublicKey: pub,
-			IsCA:      false,
-			Issuer:    issuer,
-		},
+	network, err := netip.ParsePrefix(ip.String())
+	if err != nil {
+		return nil, fmt.Errorf("error parsing cidr from ip: %s", err)
 	}
 
-	if err := nc.CheckRootConstrains(caCert); err != nil {
-		return nil, fmt.Errorf("refusing to sign, root certificate constraints violated: %s", err)
+	t := cert.TBSCertificate{
+		Version:   cert.Version1,
+		Name:      name,
+		Networks:  []netip.Prefix{network},
+		Groups:    agent.Groups,
+		IsCA:      false,
+		NotBefore: time.Now(),
+		NotAfter:  time.Now().Add(duration), // TODO load default duration from config
+		PublicKey: pub,
 	}
 
-	err = nc.Sign(cert.Curve_CURVE25519, caKey)
+	certificate, err := t.Sign(caCert, cert.Curve_CURVE25519, caKey)
 	if err != nil {
 		return nil, fmt.Errorf("error while signing: %s", err)
 	}
 
-	b, err := nc.MarshalToPEM()
+	b, err := certificate.MarshalPEM()
 	if err != nil {
 		return nil, fmt.Errorf("error while marshalling certificate: %s", err)
 	}
 
 	agent.SignedPEM = string(b)
-	agent.IssuedAt = timestamppb.New(nc.Details.NotBefore)
-	agent.ExpiresAt = timestamppb.New(nc.Details.NotAfter)
+	agent.IssuedAt = timestamppb.New(t.NotBefore)
+	agent.ExpiresAt = timestamppb.New(t.NotAfter)
 	agent.AssignedIP = ip.String()
 
 	return agent, nil
@@ -574,12 +568,12 @@ func (s *Store) saveCA(txn *badger.Txn, ca *CA) error {
 }
 
 func NebulaFingerprintFromPEM(pem string) (string, error) {
-	publicKey, _, err := cert.UnmarshalNebulaCertificateFromPEM([]byte(pem))
+	publicKey, _, err := cert.UnmarshalCertificateFromPEM([]byte(pem))
 	if err != nil {
 		return "", fmt.Errorf("failed to parse certificate: %s", err.Error())
 	}
 
-	nebulaFingerprint, err := publicKey.Sha256Sum()
+	nebulaFingerprint, err := publicKey.Fingerprint()
 	if err != nil {
 		return "", fmt.Errorf("failed to parse certificate: %s", err.Error())
 	}
@@ -588,6 +582,7 @@ func NebulaFingerprintFromPEM(pem string) (string, error) {
 }
 
 func generateCA(networkName string, groups []string, ips, subnets []*net.IPNet, duration time.Duration) (*CA, error) {
+	curve := cert.Curve_CURVE25519
 	pub, rawPriv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, fmt.Errorf("error while generating ed25519 keys: %s", err)
@@ -597,31 +592,49 @@ func generateCA(networkName string, groups []string, ips, subnets []*net.IPNet, 
 		duration = DEFAULT_CA_DURATION
 	}
 
-	nc := cert.NebulaCertificate{
-		Details: cert.NebulaCertificateDetails{
-			Name:      networkName,
-			Groups:    groups,
-			Ips:       ips,
-			Subnets:   subnets,
-			NotBefore: time.Now(),
-			NotAfter:  time.Now().Add(duration),
-			PublicKey: pub,
-			IsCA:      true,
-		},
+	networks := make([]netip.Prefix, 0, len(ips))
+	for _, ip := range ips {
+		network, err := netip.ParsePrefix(ip.String())
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse ip: %s", err)
+		}
+		networks = append(networks, network)
 	}
 
-	err = nc.Sign(cert.Curve_CURVE25519, rawPriv)
+	unsafeNetworks := make([]netip.Prefix, 0, len(subnets))
+	for _, subnet := range subnets {
+		unsafeNetwork, err := netip.ParsePrefix(subnet.String())
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse subnet: %s", err)
+		}
+		unsafeNetworks = append(unsafeNetworks, unsafeNetwork)
+	}
+
+	t := cert.TBSCertificate{
+		Version:        cert.Version1,
+		Name:           networkName,
+		Networks:       networks,
+		UnsafeNetworks: unsafeNetworks,
+		Groups:         groups,
+		IsCA:           true,
+		NotBefore:      time.Now(),
+		NotAfter:       time.Now().Add(duration),
+		PublicKey:      pub,
+		Curve:          curve,
+	}
+
+	certificate, err := t.Sign(nil, curve, rawPriv)
 	if err != nil {
 		return nil, fmt.Errorf("error while signing: %s", err)
 	}
 
-	sum, err := nc.Sha256Sum()
+	sum, err := certificate.Fingerprint()
 	if err != nil {
 		return nil, err
 	}
 
-	key := cert.MarshalEd25519PrivateKey(rawPriv)
-	crt, err := nc.MarshalToPEM()
+	key := cert.MarshalSigningPrivateKeyToPEM(curve, rawPriv)
+	crt, err := certificate.MarshalPEM()
 	if err != nil {
 		return nil, err
 	}

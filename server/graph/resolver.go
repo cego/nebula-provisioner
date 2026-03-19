@@ -53,12 +53,10 @@ func agentToModel(a *store.Agent) *model.Agent {
 		Name:        &a.Name,
 	}
 	if a.ExpiresAt != nil {
-		expiresAt := a.ExpiresAt.AsTime().Format(time.RFC3339)
-		agent.ExpiresAt = &expiresAt
+		agent.ExpiresAt = new(a.ExpiresAt.AsTime().Format(time.RFC3339))
 	}
 	if a.IssuedAt != nil {
-		issuedAt := a.IssuedAt.AsTime().Format(time.RFC3339)
-		agent.IssuedAt = &issuedAt
+		agent.IssuedAt = new(a.IssuedAt.AsTime().Format(time.RFC3339))
 	}
 	return agent
 }
