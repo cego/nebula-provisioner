@@ -3,7 +3,7 @@ module github.com/cego/nebula-provisioner
 go 1.26.1
 
 require (
-	github.com/99designs/gqlgen v0.17.88
+	github.com/99designs/gqlgen v0.17.89
 	github.com/dgraph-io/badger/v3 v3.2103.5
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/sessions v1.4.0
