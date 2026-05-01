@@ -1,13 +1,13 @@
 module github.com/cego/nebula-provisioner
 
-go 1.26.1
+go 1.26.2
 
 require (
 	github.com/99designs/gqlgen v0.17.88
 	github.com/dgraph-io/badger/v3 v3.2103.5
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/sessions v1.4.0
-	github.com/jackpal/gateway v1.1.1
+	github.com/jackpal/gateway v1.2.0
 	github.com/jackpal/go-nat-pmp v1.0.2
 	github.com/lafriks/go-spaproxy v0.2.0
 	github.com/mitchellh/go-ps v1.0.0
@@ -32,7 +32,6 @@ require (
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dgraph-io/ristretto v0.2.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
@@ -49,12 +48,9 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/klauspost/compress v1.18.4 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/sosodev/duration v1.4.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	github.com/stretchr/objx v0.5.3 // indirect
-	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/urfave/cli/v3 v3.7.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
