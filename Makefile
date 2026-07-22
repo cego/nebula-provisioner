@@ -15,7 +15,8 @@ else
 endif
 
 ALL_LINUX = linux-amd64 \
-	linux-386
+	linux-386 \
+	linux-arm64
 
 ALL = $(ALL_LINUX)
 
